@@ -5,6 +5,21 @@
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>NovaBiz Merchant Dashboard</title>
+    <script>
+      // Sets data-theme before first paint, so there's no flash of the wrong theme.
+      // Reads the same 'novabiz-theme' key ThemeProvider writes to; if nothing is
+      // stored, the CSS in theme/tokens.css falls back to prefers-color-scheme.
+      ;(function () {
+        try {
+          var stored = localStorage.getItem('novabiz-theme')
+          if (stored === 'light' || stored === 'dark') {
+            document.documentElement.dataset.theme = stored
+          }
+        } catch (e) {
+          // localStorage unavailable — falls back to prefers-color-scheme.
+        }
+      })()
+    </script>
   </head>
   <body>
     <div id="root"></div>
