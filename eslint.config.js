@@ -101,6 +101,12 @@ export default tseslint.config(
     },
   },
   {
+    // Money files also count as "not api/client.ts", so if this ban and the plain
+    // fetch ban below were two separate `no-restricted-globals` blocks, the second
+    // one to match a given file would silently replace the first instead of adding
+    // to it — flat config merges same-key rules by "last one wins", not by union.
+    // So every restricted global for money/send-money files is listed together here,
+    // and the block below explicitly excludes these paths to avoid the collision.
     files: ['src/lib/money*.{ts,tsx}', 'src/features/send-money/**/*.{ts,tsx}'],
     rules: {
       'no-restricted-globals': [
@@ -108,6 +114,11 @@ export default tseslint.config(
         {
           name: 'parseFloat',
           message: 'Never use parseFloat on money values — use parseNairaToKobo instead.',
+        },
+        {
+          name: 'fetch',
+          message:
+            'Components/hooks must not call fetch directly — go through api/endpoints via a hook.',
         },
       ],
       'no-restricted-properties': [
@@ -122,7 +133,7 @@ export default tseslint.config(
   },
   {
     files: ['**/*.{ts,tsx}'],
-    ignores: ['src/api/client.ts'],
+    ignores: ['src/api/client.ts', 'src/lib/money*.{ts,tsx}', 'src/features/send-money/**/*.{ts,tsx}'],
     rules: {
       'no-restricted-globals': [
         'error',
