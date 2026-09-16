@@ -10,6 +10,7 @@ setupMockServer()
 
 describe('DashboardPage', () => {
   it('shows the balance once the merchant loads', async () => {
+    setControls({ fixedLatencyMs: 0, failRate: 0, timeoutMode: false })
     renderWithQueryClient(<DashboardPage />)
     expect(await screen.findByText('Available balance')).toBeInTheDocument()
   })
