@@ -42,7 +42,18 @@ export interface TransferRecord {
   idempotencyKey: string
   status: 'successful' | 'failed'
   transactionId: string
+  /** Present when status is 'failed' — the reason shown to the user. */
+  message?: string
   createdAt: string
+}
+
+/** A resolved name-enquiry result, kept just long enough to back a transfer's nameEnquiryRef check. */
+export interface NameEnquiryRecord {
+  ref: string
+  accountNumber: string
+  bankCode: string
+  accountName: string
+  createdAt: number
 }
 
 export interface SeedData {

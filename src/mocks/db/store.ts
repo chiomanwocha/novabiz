@@ -1,12 +1,21 @@
 import { generateSeed } from './seed'
-import type { Bank, Merchant, SeedData, Transaction, TransferRecord } from './types'
+import type {
+  Bank,
+  Merchant,
+  NameEnquiryRecord,
+  SeedData,
+  Transaction,
+  TransferRecord,
+} from './types'
 
 let state: SeedData = generateSeed()
 let transfersByKey = new Map<string, TransferRecord>()
+let nameEnquiriesByRef = new Map<string, NameEnquiryRecord>()
 
 export function resetStore(now?: number): void {
   state = generateSeed(now)
   transfersByKey = new Map()
+  nameEnquiriesByRef = new Map()
 }
 
 export function getMerchant(): Merchant {
@@ -37,4 +46,12 @@ export function getTransferByKey(idempotencyKey: string): TransferRecord | undef
 
 export function saveTransfer(record: TransferRecord): void {
   transfersByKey.set(record.idempotencyKey, record)
+}
+
+export function getNameEnquiry(ref: string): NameEnquiryRecord | undefined {
+  return nameEnquiriesByRef.get(ref)
+}
+
+export function saveNameEnquiry(record: NameEnquiryRecord): void {
+  nameEnquiriesByRef.set(record.ref, record)
 }

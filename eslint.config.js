@@ -133,7 +133,14 @@ export default tseslint.config(
   },
   {
     files: ['**/*.{ts,tsx}'],
-    ignores: ['src/api/client.ts', 'src/lib/money*.{ts,tsx}', 'src/features/send-money/**/*.{ts,tsx}'],
+    // Test files legitimately call fetch directly to exercise MSW handlers before
+    // api/client.ts exists to wrap them.
+    ignores: [
+      'src/api/client.ts',
+      'src/lib/money*.{ts,tsx}',
+      'src/features/send-money/**/*.{ts,tsx}',
+      '**/__test__/**',
+    ],
     rules: {
       'no-restricted-globals': [
         'error',
