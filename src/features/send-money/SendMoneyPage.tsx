@@ -6,6 +6,7 @@ import { SendMoneyStepper, type Step } from './components/SendMoneyStepper'
 import { StatusAnnouncer } from './components/StatusAnnouncer'
 import { StepHeading } from './components/StepHeading'
 import { sendMoneyCopy } from './copy'
+import { RecipientStep } from './steps/RecipientStep'
 
 type StepId = 'recipient' | 'amount' | 'review' | 'confirm'
 
@@ -28,9 +29,11 @@ function previousStepId(current: StepId): StepId {
 
 /**
  * The Send Money flow's shell: the stepper, the focused step heading, and the shared
- * status region. Step bodies are placeholders until RecipientStep (CP-16), AmountStep
- * (CP-17), and ReviewStep/ConfirmStep (CP-18) replace them with real forms — this
- * checkpoint is only the navigation and accessibility scaffolding around them.
+ * status region. RecipientStep (CP-16) is the first real step, with its own gated Next
+ * button. AmountStep (CP-17) and ReviewStep/ConfirmStep (CP-18) are still placeholders
+ * behind generic Back/Next controls until they replace this with real, self-gated forms.
+ * The resolved recipient isn't threaded into further steps yet — that lands in CP-18,
+ * once ReviewStep actually has something to show for it.
  */
 export function SendMoneyPage() {
   const [stepId, setStepId] = useState<StepId>('recipient')
@@ -44,27 +47,36 @@ export function SendMoneyPage() {
     <div className="flex flex-col gap-4">
       <SendMoneyStepper steps={STEPS} currentStepId={stepId} />
       <StepHeading ref={headingRef}>{sendMoneyCopy.stepTitles[stepId]}</StepHeading>
-      <StatusAnnouncer message={null} />
-      <p className="text-muted">{sendMoneyCopy.stepPlaceholders[stepId]}</p>
-      <div className="flex justify-between">
-        <Button
-          variant="secondary"
-          onClick={() => {
-            setStepId(previousStepId(stepId))
-          }}
-          disabled={stepId === 'recipient'}
-        >
-          Back
-        </Button>
-        <Button
-          onClick={() => {
+      {stepId === 'recipient' ? (
+        <RecipientStep
+          onNext={() => {
             setStepId(nextStepId(stepId))
           }}
-          disabled={stepId === 'confirm'}
-        >
-          Next
-        </Button>
-      </div>
+        />
+      ) : (
+        <>
+          <StatusAnnouncer message={null} />
+          <p className="text-muted">{sendMoneyCopy.stepPlaceholders[stepId]}</p>
+          <div className="flex justify-between">
+            <Button
+              variant="secondary"
+              onClick={() => {
+                setStepId(previousStepId(stepId))
+              }}
+            >
+              Back
+            </Button>
+            <Button
+              onClick={() => {
+                setStepId(nextStepId(stepId))
+              }}
+              disabled={stepId === 'confirm'}
+            >
+              Next
+            </Button>
+          </div>
+        </>
+      )}
     </div>
   )
 }

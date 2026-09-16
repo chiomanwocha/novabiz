@@ -1,42 +1,75 @@
-import { render, screen } from '@testing-library/react'
+import { screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 
+import { setControls } from '../../../mocks/controls'
+import { setupMockServer } from '../../../mocks/handlers/__test__/setupMockServer'
+import { renderWithQueryClient } from '../../../test/renderWithQueryClient'
 import { SendMoneyPage } from '../SendMoneyPage'
 
+setupMockServer()
+
+const RECIPIENT_ACCOUNT_NUMBER = '0102030400'
+const RECIPIENT_BANK_CODE = '011'
+// RecipientStep fetches both the bank list and the merchant on mount — the very first
+// render in a test file can take longer than RTL's default 1000ms wait from test-runtime
+// overhead alone, even with mock latency pinned to 0, so this wait uses a longer timeout.
+const BANK_LIST_TIMEOUT_MS = 5000
+
 describe('SendMoneyPage', () => {
-  it('moves focus to the new step heading when advancing to the next step', async () => {
-    const user = userEvent.setup()
-    render(<SendMoneyPage />)
+  it('shows RecipientStep first, with focus on its heading', async () => {
+    setControls({ fixedLatencyMs: 0, failRate: 0, timeoutMode: false })
+    renderWithQueryClient(<SendMoneyPage />)
 
-    expect(screen.getByRole('heading', { name: 'Who are you sending to?' })).toBeInTheDocument()
-
-    await user.click(screen.getByRole('button', { name: 'Next' }))
-
-    expect(screen.getByRole('heading', { name: 'How much?' })).toHaveFocus()
+    expect(await screen.findByRole('heading', { name: 'Who are you sending to?' })).toHaveFocus()
   })
 
-  it('disables Back on the first step and Next on the last step', async () => {
+  it('advances to the Amount step once a recipient resolves, moving focus to its heading', async () => {
+    setControls({ fixedLatencyMs: 0, failRate: 0, timeoutMode: false })
     const user = userEvent.setup()
-    render(<SendMoneyPage />)
+    renderWithQueryClient(<SendMoneyPage />)
 
-    expect(screen.getByRole('button', { name: 'Back' })).toBeDisabled()
+    const bankSelect = screen.getByLabelText('Bank')
+    await within(bankSelect).findByRole(
+      'option',
+      { name: 'First Bank of Nigeria' },
+      { timeout: BANK_LIST_TIMEOUT_MS },
+    )
+    await user.selectOptions(bankSelect, RECIPIENT_BANK_CODE)
+    await user.type(screen.getByLabelText('Account number'), RECIPIENT_ACCOUNT_NUMBER)
 
-    await user.click(screen.getByRole('button', { name: 'Next' }))
-    await user.click(screen.getByRole('button', { name: 'Next' }))
-    await user.click(screen.getByRole('button', { name: 'Next' }))
+    const nextButton = await screen.findByRole('button', { name: 'Next' })
+    await waitFor(() => {
+      expect(nextButton).toBeEnabled()
+    })
+    await user.click(nextButton)
 
-    expect(screen.getByRole('heading', { name: 'Confirm' })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Next' })).toBeDisabled()
+    expect(await screen.findByRole('heading', { name: 'How much?' })).toHaveFocus()
   })
 
-  it('moves back to the previous step heading', async () => {
+  it('goes back from the Amount placeholder to a fresh Recipient step', async () => {
+    setControls({ fixedLatencyMs: 0, failRate: 0, timeoutMode: false })
     const user = userEvent.setup()
-    render(<SendMoneyPage />)
+    renderWithQueryClient(<SendMoneyPage />)
 
-    await user.click(screen.getByRole('button', { name: 'Next' }))
-    expect(screen.getByRole('heading', { name: 'How much?' })).toBeInTheDocument()
+    const bankSelect = screen.getByLabelText('Bank')
+    await within(bankSelect).findByRole(
+      'option',
+      { name: 'First Bank of Nigeria' },
+      { timeout: BANK_LIST_TIMEOUT_MS },
+    )
+    await user.selectOptions(bankSelect, RECIPIENT_BANK_CODE)
+    await user.type(screen.getByLabelText('Account number'), RECIPIENT_ACCOUNT_NUMBER)
+
+    const nextButton = await screen.findByRole('button', { name: 'Next' })
+    await waitFor(() => {
+      expect(nextButton).toBeEnabled()
+    })
+    await user.click(nextButton)
+    await screen.findByRole('heading', { name: 'How much?' })
 
     await user.click(screen.getByRole('button', { name: 'Back' }))
-    expect(screen.getByRole('heading', { name: 'Who are you sending to?' })).toHaveFocus()
+
+    expect(await screen.findByRole('heading', { name: 'Who are you sending to?' })).toHaveFocus()
+    expect(screen.getByLabelText('Account number')).toHaveValue('')
   })
 })

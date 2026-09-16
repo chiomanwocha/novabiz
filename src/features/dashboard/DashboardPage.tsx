@@ -1,3 +1,4 @@
+import { useMerchant } from '../../shared/hooks/useMerchant'
 import { ErrorState } from '../../shared/ui/ErrorState'
 import { Skeleton } from '../../shared/ui/Skeleton'
 import { VisuallyHidden } from '../../shared/ui/VisuallyHidden'
@@ -6,7 +7,6 @@ import { BalanceSummary } from './components/BalanceSummary'
 import { TransactionFeed } from './components/TransactionFeed'
 import { TransactionFilters } from './components/TransactionFilters'
 import { dashboardCopy } from './copy'
-import { useMerchant } from './hooks/useMerchant'
 import { useTransactionFilterParams } from './hooks/useTransactionFilterParams'
 
 /** The dashboard's container: wires useMerchant to BalanceSummary and its loading/error states. */

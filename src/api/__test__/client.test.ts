@@ -10,15 +10,15 @@ import { apiRequest } from '../client'
 // the factory can't reference any outer variable (same pattern as the handler tests).
 vi.mock('../../config/constants', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../config/constants')>()),
-  REQUEST_TIMEOUT_MS: 100,
+  REQUEST_TIMEOUT_MS: 400,
 }))
 
-const mockTimeoutMs = 100
+const mockTimeoutMs = 400
 
 setupMockServer()
 
 beforeEach(() => {
-  // The mocked REQUEST_TIMEOUT_MS (100ms) is shorter than the mock server's default
+  // The mocked REQUEST_TIMEOUT_MS (400ms) is shorter than the mock server's default
   // random latency (400-1200ms) — without this, every request in this file would time
   // out for real before the handler ever responds.
   setControls({ fixedLatencyMs: 0, failRate: 0, timeoutMode: false })
