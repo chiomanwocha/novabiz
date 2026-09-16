@@ -3,6 +3,7 @@ import { Skeleton } from '../../shared/ui/Skeleton'
 import { VisuallyHidden } from '../../shared/ui/VisuallyHidden'
 
 import { BalanceSummary } from './components/BalanceSummary'
+import { TransactionFeed } from './components/TransactionFeed'
 import { dashboardCopy } from './copy'
 import { useMerchant } from './hooks/useMerchant'
 
@@ -28,5 +29,10 @@ export function DashboardPage() {
     )
   }
 
-  return <BalanceSummary merchant={merchantQuery.data} />
+  return (
+    <div className="flex flex-col gap-4">
+      <BalanceSummary merchant={merchantQuery.data} />
+      <TransactionFeed />
+    </div>
+  )
 }
