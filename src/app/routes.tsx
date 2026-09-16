@@ -1,12 +1,9 @@
 import { createBrowserRouter, Outlet } from 'react-router-dom'
 
+import { DashboardPage } from '../features/dashboard/DashboardPage'
 import { AppShell } from '../shared/layout/AppShell'
 
-// Placeholders until DashboardPage (CP-12) and SendMoneyPage (CP-15) replace them.
-function DashboardPlaceholder() {
-  return <p className="text-muted">Dashboard coming in CP-12.</p>
-}
-
+// Placeholder until SendMoneyPage (CP-15) replaces it.
 function SendMoneyPlaceholder() {
   return <p className="text-muted">Send Money coming in CP-15.</p>
 }
@@ -23,7 +20,7 @@ export const router = createBrowserRouter([
   {
     element: <RootLayout />,
     children: [
-      { path: '/', element: <DashboardPlaceholder /> },
+      { path: '/', element: <DashboardPage /> },
       { path: '/send', element: <SendMoneyPlaceholder /> },
     ],
   },
