@@ -4,12 +4,15 @@ import { VisuallyHidden } from '../../shared/ui/VisuallyHidden'
 
 import { BalanceSummary } from './components/BalanceSummary'
 import { TransactionFeed } from './components/TransactionFeed'
+import { TransactionFilters } from './components/TransactionFilters'
 import { dashboardCopy } from './copy'
 import { useMerchant } from './hooks/useMerchant'
+import { useTransactionFilterParams } from './hooks/useTransactionFilterParams'
 
 /** The dashboard's container: wires useMerchant to BalanceSummary and its loading/error states. */
 export function DashboardPage() {
   const merchantQuery = useMerchant()
+  const { filters, setFilters } = useTransactionFilterParams()
 
   if (merchantQuery.isPending) {
     return (
@@ -32,7 +35,8 @@ export function DashboardPage() {
   return (
     <div className="flex flex-col gap-4">
       <BalanceSummary merchant={merchantQuery.data} />
-      <TransactionFeed />
+      <TransactionFilters value={filters} onChange={setFilters} />
+      <TransactionFeed filters={filters} />
     </div>
   )
 }
