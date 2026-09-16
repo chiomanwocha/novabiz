@@ -1,4 +1,10 @@
-import { isNubanFormat, isValidNubanCheckDigit, sanitiseAccountInput, suggestBanks } from '../nuban'
+import {
+  generateNuban,
+  isNubanFormat,
+  isValidNubanCheckDigit,
+  sanitiseAccountInput,
+  suggestBanks,
+} from '../nuban'
 
 // Valid vectors: the first two are worked examples from published NUBAN documentation
 // (see BUILD_LOG "Review this" for sources); the third was generated with this same
@@ -62,6 +68,28 @@ describe('isValidNubanCheckDigit', () => {
 
   it('rejects a malformed bank code instead of throwing', () => {
     expect(isValidNubanCheckDigit('0000014579', '11')).toBe(false)
+  })
+})
+
+describe('generateNuban', () => {
+  it.each(VALID_VECTORS)(
+    'reproduces the published/verified account number for $bankName ($bankCode)',
+    ({ bankCode, accountNumber }) => {
+      expect(generateNuban(bankCode, accountNumber.slice(0, 9))).toBe(accountNumber)
+    },
+  )
+
+  it('always produces a number that passes its own validity check', () => {
+    const generated = generateNuban('033', '123456789')
+    expect(isValidNubanCheckDigit(generated, '033')).toBe(true)
+  })
+
+  it('rejects a bank code that is not exactly 3 digits', () => {
+    expect(() => generateNuban('11', '123456789')).toThrow(RangeError)
+  })
+
+  it('rejects a serial that is not exactly 9 digits', () => {
+    expect(() => generateNuban('011', '123')).toThrow(RangeError)
   })
 })
 

@@ -30,6 +30,13 @@ export function isNubanFormat(accountNumber: string): boolean {
   return /^\d{10}$/.test(accountNumber)
 }
 
+/** The weighted-sum checksum shared by validation and generation — the one place the algorithm lives. */
+function computeCheckDigit(bankCode: string, serial: string): number {
+  const digits = `000${bankCode}${serial}`.split('').map(Number)
+  const sum = digits.reduce((total, digit, index) => total + digit * (NUBAN_WEIGHTS[index] ?? 0), 0)
+  return (10 - (sum % 10)) % 10
+}
+
 /**
  * True if the 10th digit of `accountNumber` is the correct CBN check digit for the
  * given 3-digit `bankCode`. Returns false (never throws) for malformed input.
@@ -40,11 +47,19 @@ export function isValidNubanCheckDigit(accountNumber: string, bankCode: string):
   }
 
   const serial = accountNumber.slice(0, 9)
-  const digits = `000${bankCode}${serial}`.split('').map(Number)
-  const sum = digits.reduce((total, digit, index) => total + digit * (NUBAN_WEIGHTS[index] ?? 0), 0)
-  const expectedCheckDigit = (10 - (sum % 10)) % 10
+  return computeCheckDigit(bankCode, serial) === Number(accountNumber.charAt(9))
+}
 
-  return expectedCheckDigit === Number(accountNumber.charAt(9))
+/**
+ * Builds a valid 10-digit NUBAN from a 3-digit `bankCode` and a 9-digit `serial`,
+ * computing the correct check digit. Used by the mock seed data so generated
+ * recipient account numbers always pass `isValidNubanCheckDigit` for their bank.
+ */
+export function generateNuban(bankCode: string, serial: string): string {
+  if (!/^\d{3}$/.test(bankCode) || !/^\d{9}$/.test(serial)) {
+    throw new RangeError('generateNuban requires a 3-digit bank code and a 9-digit serial')
+  }
+  return `${serial}${String(computeCheckDigit(bankCode, serial))}`
 }
 
 /** Banks whose check digit matches `accountNumber` — shown first in BankSelect when no bank is chosen yet. */
