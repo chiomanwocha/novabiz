@@ -1,0 +1,45 @@
+@import 'tailwindcss';
+
+/*
+  Brand tokens. Hex values are placeholders pending Chioma's check against
+  the official FirstBank logo (see BUILD_LOG "Review this"). Dark-mode
+  values here are the token *values* only — the mechanism that sets
+  data-theme (ThemeProvider, localStorage, the no-flash inline script)
+  is wired up separately.
+*/
+@theme {
+  --color-primary: #003b65;
+  --color-accent: #f2b31b;
+  --color-surface: #ffffff;
+  --color-text: #101418;
+  --color-muted: #5b6570;
+  --color-success: #1e8e5a;
+  --color-danger: #c8372d;
+  --color-warning: #b45309;
+
+  --font-sans: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    --color-primary: #4a8fc2;
+    --color-accent: #f2b31b;
+    --color-surface: #14181d;
+    --color-text: #eef1f4;
+    --color-muted: #9aa5b1;
+    --color-success: #35b57a;
+    --color-danger: #e2564a;
+    --color-warning: #d99a3d;
+  }
+}
+
+:root[data-theme='dark'] {
+  --color-primary: #4a8fc2;
+  --color-accent: #f2b31b;
+  --color-surface: #14181d;
+  --color-text: #eef1f4;
+  --color-muted: #9aa5b1;
+  --color-success: #35b57a;
+  --color-danger: #e2564a;
+  --color-warning: #d99a3d;
+}
