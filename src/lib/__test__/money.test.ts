@@ -1,4 +1,4 @@
-import { formatKobo, parseNairaToKobo, sumKobo, toKobo } from './money'
+import { formatKobo, parseNairaToKobo, sumKobo, toKobo } from '../money'
 
 describe('toKobo', () => {
   it('brands a safe integer as Kobo', () => {
