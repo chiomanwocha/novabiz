@@ -1,6 +1,8 @@
 import type { ReactNode } from 'react'
 
 import { BrandMark } from './BrandMark'
+import { DevControls } from './DevControls'
+import { OfflineBanner } from './OfflineBanner'
 import { PrimaryNav } from './PrimaryNav'
 import { ThemeToggle } from './ThemeToggle'
 
@@ -30,12 +32,14 @@ export function AppShell({ children }: AppShellProps) {
           </div>
           <ThemeToggle />
         </header>
+        <OfflineBanner />
         <main className="flex-1">
           <div className="mx-auto w-full max-w-6xl px-3.5 pb-24 pt-4 sm:px-4 md:px-6 md:pb-10 md:pt-6">
             {children}
           </div>
         </main>
       </div>
+      <DevControls />
     </div>
   )
 }
