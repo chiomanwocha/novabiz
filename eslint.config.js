@@ -4,6 +4,8 @@ import reactHooks from 'eslint-plugin-react-hooks'
 import reactRefresh from 'eslint-plugin-react-refresh'
 import jsxA11y from 'eslint-plugin-jsx-a11y'
 import importPlugin from 'eslint-plugin-import'
+// https://github.com/storybookjs/eslint-plugin-storybook#configuration-flat-config-format
+import storybook from 'eslint-plugin-storybook'
 import tseslint from 'typescript-eslint'
 import prettier from 'eslint-config-prettier'
 
@@ -154,8 +156,14 @@ export default tseslint.config(
     },
   },
   {
-    files: ['**/*.config.{ts,js}', '**/*.setup.{ts,js}', 'tests/**/*.ts'],
+    files: [
+      '**/*.config.{ts,js}',
+      '**/*.setup.{ts,js}',
+      'tests/**/*.ts',
+      '.storybook/**/*.{ts,tsx}',
+    ],
     ...tseslint.configs.disableTypeChecked,
   },
   prettier,
+  storybook.configs['flat/recommended'],
 )
