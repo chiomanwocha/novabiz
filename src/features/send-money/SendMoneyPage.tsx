@@ -4,6 +4,7 @@ import { SendMoneyStepper, type Step } from './components/SendMoneyStepper'
 import { StepContextPanel } from './components/StepContextPanel'
 import { StepHeading } from './components/StepHeading'
 import { sendMoneyCopy } from './copy'
+import { useIdempotencyKey } from './hooks/useIdempotencyKey'
 import { AmountStep, type AmountDraft, type ResolvedAmount } from './steps/AmountStep'
 import { ConfirmStep } from './steps/ConfirmStep'
 import { RecipientStep, type RecipientDraft, type ResolvedRecipient } from './steps/RecipientStep'
@@ -31,15 +32,26 @@ function previousStepId(current: StepId): StepId {
 const EMPTY_RECIPIENT_DRAFT: RecipientDraft = { bankCode: null, accountNumber: '' }
 const EMPTY_AMOUNT_DRAFT: AmountDraft = { amountNaira: '', narration: '' }
 
+/** A key that only changes when the resolved recipient or amount actually changes. */
+function idempotencySignature(
+  recipient: ResolvedRecipient | null,
+  amount: ResolvedAmount | null,
+): string {
+  if (!recipient || !amount) {
+    return ''
+  }
+  return `${recipient.bankCode}:${recipient.accountNumber}:${String(amount.amountKobo)}:${amount.narration}`
+}
+
 /**
  * The Send Money flow's shell: the stepper, the focused step heading, and the shared
  * status region. All four steps are real now. Each step's *draft* (Recipient, Amount) is
  * lifted here so Back doesn't reset it — the step itself still owns its own form state,
  * it's just seeded from and reported up to its draft. The *resolved* recipient and amount
  * are lifted here too, once each step's Next actually produces one, since Review and
- * Confirm both need them. The idempotency key itself (`useIdempotencyKey`, built and
- * tested this checkpoint) isn't wired in here yet — there's nothing to send it with until
- * CP-19's real `useSendMoney` mutation exists to attach it to as a header.
+ * Confirm both need them. The idempotency key is created here too — "the flow state" per
+ * CLAUDE.md 6.4 — from a signature of the resolved recipient and amount, so it's stable
+ * across a Back-then-Forward navigation and only changes when one of them really does.
  */
 export function SendMoneyPage() {
   const [stepId, setStepId] = useState<StepId>('recipient')
@@ -48,6 +60,8 @@ export function SendMoneyPage() {
   const [resolvedRecipient, setResolvedRecipient] = useState<ResolvedRecipient | null>(null)
   const [resolvedAmount, setResolvedAmount] = useState<ResolvedAmount | null>(null)
   const headingRef = useRef<HTMLHeadingElement>(null)
+
+  const idempotencyKey = useIdempotencyKey(idempotencySignature(resolvedRecipient, resolvedAmount))
 
   useEffect(() => {
     headingRef.current?.focus()
@@ -99,6 +113,7 @@ export function SendMoneyPage() {
             <ConfirmStep
               recipient={resolvedRecipient}
               amount={resolvedAmount}
+              idempotencyKey={idempotencyKey}
               onBack={() => {
                 setStepId(previousStepId(stepId))
               }}

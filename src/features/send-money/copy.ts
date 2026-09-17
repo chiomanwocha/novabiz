@@ -20,10 +20,12 @@ export const sendMoneyCopy = {
   },
   confirm: {
     sendButton: 'Send money',
-    // The real send (useSendMoney, optimistic update, rollback, and reconciliation) is
-    // CP-19's scope — this step's Send button already disables on first press per
-    // CLAUDE.md 6.4, but there's genuinely nothing to send to yet.
-    notWiredUpYet: "Sending isn't wired up yet — that's the next checkpoint.",
+    sendingMessage: 'Sending…',
+    successMessage: 'Transfer sent',
+    genericFailureMessage:
+      "We couldn't confirm your transfer. Please check your balance and try again.",
+    unconfirmedMessage: "We couldn't confirm what happened yet — checking…",
+    retryButton: 'Try again',
   },
   amountField: {
     label: 'Amount',
