@@ -46,7 +46,7 @@ describe('SendMoneyPage', () => {
     expect(await screen.findByRole('heading', { name: 'How much?' })).toHaveFocus()
   })
 
-  it('goes back from the Amount placeholder to a fresh Recipient step', async () => {
+  it('going back to Recipient preserves the bank and account number already entered', async () => {
     setControls({ fixedLatencyMs: 0, failRate: 0, timeoutMode: false })
     const user = userEvent.setup()
     renderWithQueryClient(<SendMoneyPage />)
@@ -70,6 +70,7 @@ describe('SendMoneyPage', () => {
     await user.click(screen.getByRole('button', { name: 'Back' }))
 
     expect(await screen.findByRole('heading', { name: 'Who are you sending to?' })).toHaveFocus()
-    expect(screen.getByLabelText('Account number')).toHaveValue('')
+    expect(screen.getByLabelText('Account number')).toHaveValue(RECIPIENT_ACCOUNT_NUMBER)
+    expect(screen.getByLabelText('Bank')).toHaveValue(RECIPIENT_BANK_CODE)
   })
 })

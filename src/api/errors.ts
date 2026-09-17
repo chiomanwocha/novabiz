@@ -1,4 +1,4 @@
-export type ApiErrorKind = 'network' | 'timeout' | 'http'
+export type ApiErrorKind = 'network' | 'timeout' | 'http' | 'invalidResponse'
 
 interface ApiErrorOptions {
   kind: ApiErrorKind
@@ -29,4 +29,15 @@ export function isRetryable(error: unknown): boolean {
     return true
   }
   return error.status !== null && error.status >= 500
+}
+
+/**
+ * A 2xx response whose body isn't the expected JSON envelope only ever happens in dev when
+ * a request skipped the mock service worker entirely (see mocks/ensureWorkerControlled.ts) —
+ * every real handler always returns valid JSON. A query refetch re-sends the exact same
+ * request and gets the exact same result, so it can never fix this; only a real page reload
+ * (which re-establishes the worker's control of the page) can.
+ */
+export function requiresPageReloadToRetry(error: unknown): boolean {
+  return error instanceof ApiError && error.kind === 'invalidResponse'
 }

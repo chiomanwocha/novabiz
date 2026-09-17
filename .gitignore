@@ -19,6 +19,7 @@ storybook-static
 .env.local
 
 # Editor directories and files
+.kilo
 .vscode/*
 !.vscode/extensions.json
 .idea

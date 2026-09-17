@@ -56,10 +56,13 @@ export async function apiRequest<T>(path: string, options: ApiRequestOptions = {
   }
 
   if (!envelope) {
+    // A 2xx response that isn't valid JSON only happens, in this app, when a request never
+    // reached a mock handler at all (every handler always returns the JSON envelope) — see
+    // requiresPageReloadToRetry and mocks/ensureWorkerControlled.ts for why.
     throw new ApiError({
-      kind: 'http',
+      kind: 'invalidResponse',
       status: response.status,
-      message: 'The server sent back something unexpected.',
+      message: "That didn't load correctly. Reloading the page usually fixes this.",
     })
   }
 

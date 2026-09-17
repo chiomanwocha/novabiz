@@ -14,7 +14,11 @@ export const StepHeading = forwardRef<HTMLHeadingElement, StepHeadingProps>(func
   ref,
 ) {
   return (
-    <h2 ref={ref} tabIndex={-1} className="text-xl font-semibold text-text outline-none">
+    <h2
+      ref={ref}
+      tabIndex={-1}
+      className="text-2xl font-bold tracking-tight text-text outline-none"
+    >
       {children}
     </h2>
   )

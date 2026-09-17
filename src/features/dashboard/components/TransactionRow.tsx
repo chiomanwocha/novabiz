@@ -26,9 +26,14 @@ function TransactionRowComponent({ transaction }: TransactionRowProps) {
   const isCredit = transaction.type === 'credit'
 
   return (
-    <div className="flex h-full items-center justify-between gap-3 border-b border-muted/10 px-1">
+    <div className="flex h-full items-center justify-between gap-3 border-b border-border px-1 transition hover:bg-surface-hover">
       <div className="flex min-w-0 items-center gap-3">
-        <span aria-hidden="true" className={`text-lg ${isCredit ? 'text-success' : 'text-text'}`}>
+        <span
+          aria-hidden="true"
+          className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-base ${
+            isCredit ? 'bg-success-bg text-success' : 'bg-danger-bg text-danger'
+          }`}
+        >
           {isCredit ? '↓' : '↑'}
         </span>
         <div className="min-w-0">
@@ -39,8 +44,8 @@ function TransactionRowComponent({ transaction }: TransactionRowProps) {
           <p className="truncate text-xs text-muted">{transaction.description}</p>
         </div>
       </div>
-      <div className="flex flex-shrink-0 flex-col items-end gap-1">
-        <span className={`text-sm font-semibold ${isCredit ? 'text-success' : 'text-text'}`}>
+      <div className="flex shrink-0 flex-col items-end gap-1">
+        <span className={`text-sm font-semibold ${isCredit ? 'text-success' : 'text-danger'}`}>
           {isCredit ? '+' : '-'}
           {formatKobo(transaction.amountKobo)}
         </span>

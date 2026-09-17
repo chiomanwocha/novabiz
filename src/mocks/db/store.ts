@@ -8,14 +8,25 @@ import type {
   TransferRecord,
 } from './types'
 
-let state: SeedData = generateSeed()
+let seedNow = Date.now()
+let state: SeedData = generateSeed(seedNow)
 let transfersByKey = new Map<string, TransferRecord>()
 let nameEnquiriesByRef = new Map<string, NameEnquiryRecord>()
 
-export function resetStore(now?: number): void {
+export function resetStore(now: number = Date.now()): void {
+  seedNow = now
   state = generateSeed(now)
   transfersByKey = new Map()
   nameEnquiriesByRef = new Map()
+}
+
+/**
+ * The `now` the current seed was generated relative to — reused by anything that computes
+ * "this week"/"today" from the seeded transactions, so those figures stay in step with the
+ * deterministic seed data instead of drifting against the real wall clock in tests.
+ */
+export function getSeedNow(): number {
+  return seedNow
 }
 
 export function getMerchant(): Merchant {

@@ -6,40 +6,96 @@
   values here are the token *values* only — the mechanism that sets
   data-theme (ThemeProvider, localStorage, the no-flash inline script)
   is wired up separately.
+
+  `--color-bg` (the page background) is kept distinct from `--color-surface`
+  (cards, the sidebar, inputs) so cards actually read as raised content
+  instead of blending into the page — the flat, single-surface look was
+  part of why the dashboard felt like an unstyled form rather than a
+  real app.
 */
 @theme {
   --color-primary: #003b65;
+  --color-primary-hover: #002a49;
   --color-accent: #f2b31b;
+  --color-accent-hover: #d99c0d;
+  --color-bg: #f4f6f9;
   --color-surface: #ffffff;
+  --color-surface-hover: #eef1f5;
+  --color-border: #e2e6ec;
   --color-text: #101418;
   --color-muted: #5b6570;
   --color-success: #1e8e5a;
+  --color-success-bg: #e8f5ef;
   --color-danger: #c8372d;
+  --color-danger-bg: #fbeceb;
   --color-warning: #b45309;
 
+  /*
+    Text painted on a gold (--color-accent) surface, e.g. the primary Button variant.
+    --color-accent itself never changes between light/dark, but --color-primary (the
+    button's text color) does — in dark mode --color-primary shifts to a light blue for
+    contrast on dark surfaces elsewhere, which silently made "primary" buttons render
+    light-blue text on a still-gold background. --color-on-accent is deliberately fixed
+    (not theme-dependent) so gold surfaces always get the same dark, readable text.
+  */
+  --color-on-accent: #12253a;
+
+  /*
+    A stable FirstBank navy for brand-specific surfaces (the sidebar rail) that must stay
+    navy in both themes — distinct from --color-primary, which is allowed to shift for
+    text/link contrast in dark mode.
+  */
+  --color-brand-navy: #003b65;
+  --color-brand-navy-hover: #0a4d7d;
+
   --font-sans: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+
+  --animate-shimmer: shimmer 1.6s ease-in-out infinite;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -150% 0;
+  }
+  100% {
+    background-position: 150% 0;
+  }
 }
 
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme='light']) {
     --color-primary: #4a8fc2;
+    --color-primary-hover: #6ba6d1;
     --color-accent: #f2b31b;
+    --color-accent-hover: #ffc93f;
+    --color-bg: #0b0e12;
     --color-surface: #14181d;
+    --color-surface-hover: #1b2127;
+    --color-border: #262c33;
     --color-text: #eef1f4;
     --color-muted: #9aa5b1;
     --color-success: #35b57a;
+    --color-success-bg: rgb(53 181 122 / 0.12);
     --color-danger: #e2564a;
+    --color-danger-bg: rgb(226 86 74 / 0.12);
     --color-warning: #d99a3d;
   }
 }
 
 :root[data-theme='dark'] {
   --color-primary: #4a8fc2;
+  --color-primary-hover: #6ba6d1;
   --color-accent: #f2b31b;
+  --color-accent-hover: #ffc93f;
+  --color-bg: #0b0e12;
   --color-surface: #14181d;
+  --color-surface-hover: #1b2127;
+  --color-border: #262c33;
   --color-text: #eef1f4;
   --color-muted: #9aa5b1;
   --color-success: #35b57a;
+  --color-success-bg: rgb(53 181 122 / 0.12);
   --color-danger: #e2564a;
+  --color-danger-bg: rgb(226 86 74 / 0.12);
   --color-warning: #d99a3d;
 }

@@ -8,8 +8,8 @@ export interface BadgeProps {
 }
 
 const TONE_CLASSES: Record<BadgeTone, string> = {
-  success: 'bg-success/10 text-success',
-  danger: 'bg-danger/10 text-danger',
+  success: 'bg-success-bg text-success',
+  danger: 'bg-danger-bg text-danger',
   warning: 'bg-warning/10 text-warning',
   neutral: 'bg-muted/10 text-muted',
 }
@@ -18,8 +18,9 @@ const TONE_CLASSES: Record<BadgeTone, string> = {
 export function Badge({ tone, children }: BadgeProps) {
   return (
     <span
-      className={`inline-flex items-center rounded-full px-2 py-0.5 text-sm font-medium ${TONE_CLASSES[tone]}`}
+      className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-semibold ${TONE_CLASSES[tone]}`}
     >
+      <span aria-hidden="true" className="h-1.5 w-1.5 rounded-full bg-current" />
       {children}
     </span>
   )

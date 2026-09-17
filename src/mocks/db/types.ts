@@ -61,3 +61,27 @@ export interface SeedData {
   banks: Bank[]
   transactions: Transaction[]
 }
+
+export interface WeekOverWeekInsight {
+  thisWeekInflowKobo: Kobo
+  lastWeekInflowKobo: Kobo
+}
+
+export interface TopPayerInsight {
+  name: string
+  totalKobo: Kobo
+  transactionCount: number
+}
+
+export interface BusiestDayInsight {
+  dayLabel: string
+  transactionCount: number
+}
+
+export interface MerchantInsights {
+  weekOverWeek: WeekOverWeekInsight
+  topPayer: TopPayerInsight | null
+  busiestDay: BusiestDayInsight | null
+  /** Average credit amount over the last 30 days, `null` when there's no recent credit to average. */
+  averageSaleKobo: Kobo | null
+}

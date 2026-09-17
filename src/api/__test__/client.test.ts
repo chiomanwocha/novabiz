@@ -67,6 +67,23 @@ describe('apiRequest', () => {
     })
   })
 
+  it('throws an invalidResponse ApiError for a 2xx response that is not valid JSON', async () => {
+    // Reproduces what an unintercepted request actually gets back in dev: Vite's real dev
+    // server replies with its SPA index.html fallback at 200, not JSON — see
+    // mocks/ensureWorkerControlled.ts for why that happens and how it's prevented.
+    server.use(
+      http.get(
+        '/api/merchant',
+        () => new HttpResponse('<!doctype html><html></html>', { status: 200 }),
+      ),
+    )
+
+    await expect(apiRequest('/api/merchant')).rejects.toMatchObject({
+      kind: 'invalidResponse',
+      status: 200,
+    })
+  })
+
   it('sends a JSON body and the given headers on a POST', async () => {
     server.use(
       http.post('/api/name-enquiry', async ({ request }) => {

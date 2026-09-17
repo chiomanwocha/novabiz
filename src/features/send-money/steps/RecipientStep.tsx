@@ -2,6 +2,7 @@ import { useState } from 'react'
 
 import { useMerchant } from '../../../shared/hooks/useMerchant'
 import { Button } from '../../../shared/ui/Button'
+import { Card } from '../../../shared/ui/Card'
 import { AccountNumberField } from '../components/AccountNumberField'
 import { BankSelect } from '../components/BankSelect'
 import { ResolvedNameCard } from '../components/ResolvedNameCard'
@@ -17,7 +18,16 @@ export interface ResolvedRecipient {
   nameEnquiryRef: string
 }
 
+export interface RecipientDraft {
+  bankCode: string | null
+  accountNumber: string
+}
+
 export interface RecipientStepProps {
+  /** Seeds the bank/account fields on mount — how SendMoneyPage restores what was typed before Back. */
+  initialDraft?: RecipientDraft
+  /** Fires on every bank/account change, so the parent can remember it across a Back navigation. */
+  onDraftChange?: (draft: RecipientDraft) => void
   onNext: (recipient: ResolvedRecipient) => void
 }
 
@@ -34,11 +44,21 @@ const ERROR_MESSAGES: Record<NameEnquiryErrorReason, string> = {
  * (CLAUDE.md 6.3/6.4). Name-enquiry itself still runs for the merchant's own account, so
  * the "own account" message only appears once a real name has actually resolved.
  */
-export function RecipientStep({ onNext }: RecipientStepProps) {
+export function RecipientStep({ initialDraft, onDraftChange, onNext }: RecipientStepProps) {
   const merchantQuery = useMerchant()
   const banksQuery = useBanks()
-  const [bankCode, setBankCode] = useState<string | null>(null)
-  const [accountNumber, setAccountNumber] = useState('')
+  const [bankCode, setBankCode] = useState<string | null>(initialDraft?.bankCode ?? null)
+  const [accountNumber, setAccountNumber] = useState(initialDraft?.accountNumber ?? '')
+
+  function updateBankCode(nextBankCode: string | null): void {
+    setBankCode(nextBankCode)
+    onDraftChange?.({ bankCode: nextBankCode, accountNumber })
+  }
+
+  function updateAccountNumber(nextAccountNumber: string): void {
+    setAccountNumber(nextAccountNumber)
+    onDraftChange?.({ bankCode, accountNumber: nextAccountNumber })
+  }
 
   const enquiry = useNameEnquiry({ bankCode, accountNumber })
   const selectedBank = banksQuery.data?.find((bank) => bank.code === bankCode) ?? null
@@ -72,17 +92,17 @@ export function RecipientStep({ onNext }: RecipientStepProps) {
         : null
 
   return (
-    <div className="flex flex-col gap-4">
+    <Card className="flex flex-col gap-5">
       <BankSelect
         banks={banksQuery.data ?? []}
         value={bankCode ?? ''}
         onChange={(nextBankCode) => {
-          setBankCode(nextBankCode || null)
+          updateBankCode(nextBankCode || null)
         }}
       />
       <AccountNumberField
         value={accountNumber}
-        onChange={setAccountNumber}
+        onChange={updateAccountNumber}
         bankCode={bankCode}
         bankName={selectedBank?.name ?? null}
       />
@@ -108,6 +128,6 @@ export function RecipientStep({ onNext }: RecipientStepProps) {
           Next
         </Button>
       </div>
-    </div>
+    </Card>
   )
 }

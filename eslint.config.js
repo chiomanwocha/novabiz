@@ -16,6 +16,7 @@ export default tseslint.config(
       'test-results',
       'storybook-static',
       'public/mockServiceWorker.js',
+      '.kilo',
     ],
   },
   {

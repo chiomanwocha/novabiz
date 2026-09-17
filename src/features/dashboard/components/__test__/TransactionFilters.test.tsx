@@ -44,7 +44,25 @@ describe('TransactionFilters', () => {
     const onChange = vi.fn()
     render(<TransactionFilters value={EMPTY_FILTERS} onChange={onChange} />)
 
-    fireEvent.change(screen.getByLabelText('From'), { target: { value: '2026-09-01' } })
+    fireEvent.change(screen.getByLabelText('From date'), { target: { value: '2026-09-01' } })
     expect(onChange).toHaveBeenCalledWith({ ...EMPTY_FILTERS, from: '2026-09-01' })
+
+    fireEvent.change(screen.getByLabelText('To date'), { target: { value: '2026-09-10' } })
+    expect(onChange).toHaveBeenCalledWith({ ...EMPTY_FILTERS, to: '2026-09-10' })
+  })
+
+  it('hides "Clear filters" until a filter is active, then resets everything on click', async () => {
+    const user = userEvent.setup()
+    const onChange = vi.fn()
+    const { rerender } = render(<TransactionFilters value={EMPTY_FILTERS} onChange={onChange} />)
+
+    expect(screen.queryByRole('button', { name: 'Clear filters' })).not.toBeInTheDocument()
+
+    rerender(
+      <TransactionFilters value={{ ...EMPTY_FILTERS, status: 'successful' }} onChange={onChange} />,
+    )
+    await user.click(screen.getByRole('button', { name: 'Clear filters' }))
+
+    expect(onChange).toHaveBeenCalledWith(EMPTY_FILTERS)
   })
 })

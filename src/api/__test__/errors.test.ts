@@ -1,4 +1,4 @@
-import { ApiError, isRetryable } from '../errors'
+import { ApiError, isRetryable, requiresPageReloadToRetry } from '../errors'
 
 describe('ApiError', () => {
   it('carries its kind, status, and message, and is a real Error', () => {
@@ -33,5 +33,31 @@ describe('isRetryable', () => {
 
   it('is false for a value that is not an ApiError', () => {
     expect(isRetryable(new Error('plain'))).toBe(false)
+  })
+
+  it('does not automatically retry an invalidResponse error', () => {
+    expect(isRetryable(new ApiError({ kind: 'invalidResponse', status: 200, message: 'x' }))).toBe(
+      false,
+    )
+  })
+})
+
+describe('requiresPageReloadToRetry', () => {
+  it('is true for an invalidResponse error', () => {
+    expect(
+      requiresPageReloadToRetry(
+        new ApiError({ kind: 'invalidResponse', status: 200, message: 'x' }),
+      ),
+    ).toBe(true)
+  })
+
+  it('is false for other error kinds', () => {
+    expect(
+      requiresPageReloadToRetry(new ApiError({ kind: 'http', status: 500, message: 'x' })),
+    ).toBe(false)
+  })
+
+  it('is false for a value that is not an ApiError', () => {
+    expect(requiresPageReloadToRetry(new Error('plain'))).toBe(false)
   })
 })

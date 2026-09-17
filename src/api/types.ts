@@ -55,3 +55,13 @@ export interface TransferRecordDto {
   message?: string
   createdAt: string
 }
+
+export interface MerchantInsightsDto {
+  weekOverWeek: {
+    thisWeekInflowKobo: Kobo
+    lastWeekInflowKobo: Kobo
+  }
+  topPayer: { name: string; totalKobo: Kobo; transactionCount: number } | null
+  busiestDay: { dayLabel: string; transactionCount: number } | null
+  averageSaleKobo: Kobo | null
+}

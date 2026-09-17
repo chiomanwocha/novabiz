@@ -11,6 +11,14 @@ export interface SelectProps extends SelectHTMLAttributes<HTMLSelectElement> {
   placeholder?: string
   error?: string
   hint?: string
+  /**
+   * Whether the placeholder can be re-selected once a real option is chosen. Most selects
+   * (e.g. "choose a bank") want the placeholder disabled — it's not a real choice, it's the
+   * absence of one, and the form shouldn't let you go back to it. A filter like "Status" is
+   * the opposite: its placeholder ("All statuses") IS a real, resettable choice, so it must
+   * stay selectable or there's no way to get back to it from the dropdown itself.
+   */
+  placeholderSelectable?: boolean
 }
 
 /** A labelled select with the same error/hint wiring as Input, for consistent form fields. */
@@ -18,6 +26,7 @@ export function Select({
   label,
   options,
   placeholder,
+  placeholderSelectable = false,
   error,
   hint,
   id,
@@ -31,7 +40,7 @@ export function Select({
   const describedBy = [hintId, errorId].filter(Boolean).join(' ') || undefined
 
   return (
-    <div className="flex flex-col gap-1">
+    <div className="flex flex-col gap-1.5">
       <label htmlFor={selectId} className="text-sm font-medium text-text">
         {label}
       </label>
@@ -39,11 +48,11 @@ export function Select({
         id={selectId}
         aria-invalid={error ? true : undefined}
         aria-describedby={describedBy}
-        className={`min-h-11 rounded-md border bg-surface px-3 text-base text-text focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent ${error ? 'border-danger' : 'border-muted'} ${className ?? ''}`}
+        className={`min-h-11 rounded-lg border bg-surface px-3.5 text-base text-text transition-all duration-150 hover:border-primary/30 hover:bg-surface-hover focus-visible:border-accent focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-accent/20 ${error ? 'border-danger' : 'border-border'} ${className ?? ''}`}
         {...rest}
       >
         {placeholder && (
-          <option value="" disabled>
+          <option value="" disabled={!placeholderSelectable}>
             {placeholder}
           </option>
         )}

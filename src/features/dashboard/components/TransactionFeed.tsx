@@ -1,6 +1,8 @@
 import { useVirtualizer } from '@tanstack/react-virtual'
 import { useEffect, useRef } from 'react'
 
+import { useRetry } from '../../../shared/hooks/useRetry'
+import { Card } from '../../../shared/ui/Card'
 import { EmptyState } from '../../../shared/ui/EmptyState'
 import { ErrorState } from '../../../shared/ui/ErrorState'
 import { Skeleton } from '../../../shared/ui/Skeleton'
@@ -24,6 +26,7 @@ export interface TransactionFeedProps {
  */
 export function TransactionFeed({ filters = {} }: TransactionFeedProps) {
   const query = useTransactions(filters)
+  const retry = useRetry(query)
   const parentRef = useRef<HTMLDivElement>(null)
   const transactions = query.data?.pages.flatMap((page) => page.transactions) ?? []
   const hasNextPage = query.hasNextPage
@@ -51,58 +54,61 @@ export function TransactionFeed({ filters = {} }: TransactionFeedProps) {
     }
   }, [lastVirtualItem, transactions.length, hasNextPage, query])
 
-  if (query.isPending) {
-    return (
-      <div aria-busy="true" className="flex flex-col gap-2">
-        <VisuallyHidden>{dashboardCopy.feedLoadingLabel}</VisuallyHidden>
-        {Array.from({ length: 6 }, (_, index) => (
-          <Skeleton key={index} className="h-16 w-full" />
-        ))}
-      </div>
-    )
-  }
-
-  if (query.isError) {
-    return <ErrorState message={query.error.message} onRetry={() => void query.refetch()} />
-  }
-
-  if (transactions.length === 0) {
-    return (
-      <EmptyState
-        title={dashboardCopy.feedEmptyTitle}
-        description={dashboardCopy.feedEmptyDescription}
-      />
-    )
-  }
-
   return (
-    <div ref={parentRef} className="h-120 overflow-y-auto" aria-label="Transactions">
-      <ul className="relative w-full" style={{ height: virtualizer.getTotalSize() }}>
-        {virtualItems.map((virtualItem) => {
-          const transaction = transactions[virtualItem.index]
-          return (
-            <li
-              key={virtualItem.key}
-              style={{
-                position: 'absolute',
-                top: 0,
-                left: 0,
-                width: '100%',
-                height: `${String(virtualItem.size)}px`,
-                transform: `translateY(${String(virtualItem.start)}px)`,
-              }}
-            >
-              {transaction ? (
-                <TransactionRow transaction={transaction} />
-              ) : (
-                <div className="flex h-full items-center justify-center">
-                  <Spinner label={dashboardCopy.feedLoadingMoreLabel} />
-                </div>
-              )}
-            </li>
-          )
-        })}
-      </ul>
-    </div>
+    <Card className="p-0">
+      <h2 className="border-b border-border px-5 py-4 text-base font-semibold text-text">
+        Transactions
+      </h2>
+      <div className="px-2 pb-2">
+        {query.isPending && (
+          <div aria-busy="true" className="flex flex-col gap-2 p-3">
+            <VisuallyHidden>{dashboardCopy.feedLoadingLabel}</VisuallyHidden>
+            {Array.from({ length: 6 }, (_, index) => (
+              <Skeleton key={index} className="h-16 w-full" />
+            ))}
+          </div>
+        )}
+
+        {query.isError && <ErrorState message={query.error.message} onRetry={retry} />}
+
+        {query.isSuccess && transactions.length === 0 && (
+          <EmptyState
+            title={dashboardCopy.feedEmptyTitle}
+            description={dashboardCopy.feedEmptyDescription}
+          />
+        )}
+
+        {query.isSuccess && transactions.length > 0 && (
+          <div ref={parentRef} className="h-120 overflow-y-auto" aria-label="Transactions">
+            <ul className="relative w-full" style={{ height: virtualizer.getTotalSize() }}>
+              {virtualItems.map((virtualItem) => {
+                const transaction = transactions[virtualItem.index]
+                return (
+                  <li
+                    key={virtualItem.key}
+                    style={{
+                      position: 'absolute',
+                      top: 0,
+                      left: 0,
+                      width: '100%',
+                      height: `${String(virtualItem.size)}px`,
+                      transform: `translateY(${String(virtualItem.start)}px)`,
+                    }}
+                  >
+                    {transaction ? (
+                      <TransactionRow transaction={transaction} />
+                    ) : (
+                      <div className="flex h-full items-center justify-center">
+                        <Spinner label={dashboardCopy.feedLoadingMoreLabel} />
+                      </div>
+                    )}
+                  </li>
+                )
+              })}
+            </ul>
+          </div>
+        )}
+      </div>
+    </Card>
   )
 }
