@@ -8,6 +8,7 @@ import { StatusAnnouncer } from './components/StatusAnnouncer'
 import { StepContextPanel } from './components/StepContextPanel'
 import { StepHeading } from './components/StepHeading'
 import { sendMoneyCopy } from './copy'
+import { AmountStep, type AmountDraft } from './steps/AmountStep'
 import { RecipientStep, type RecipientDraft } from './steps/RecipientStep'
 
 type StepId = 'recipient' | 'amount' | 'review' | 'confirm'
@@ -30,20 +31,22 @@ function previousStepId(current: StepId): StepId {
 }
 
 const EMPTY_RECIPIENT_DRAFT: RecipientDraft = { bankCode: null, accountNumber: '' }
+const EMPTY_AMOUNT_DRAFT: AmountDraft = { amountNaira: '', narration: '' }
 
 /**
  * The Send Money flow's shell: the stepper, the focused step heading, and the shared
- * status region. RecipientStep (CP-16) is the first real step, with its own gated Next
- * button. AmountStep (CP-17) and ReviewStep/ConfirmStep (CP-18) are still placeholders
- * behind generic Back/Next controls until they replace this with real, self-gated forms.
- * The resolved recipient isn't threaded into further steps yet — that lands in CP-18,
- * once ReviewStep actually has something to show for it. The recipient *draft* (bank +
- * account number typed so far) is lifted here so Back doesn't reset it — RecipientStep
- * itself still owns its form state, it's just seeded from and reported up to this draft.
+ * status region. RecipientStep (CP-16) and AmountStep (CP-17) are real steps, each with
+ * its own gated Next button. ReviewStep/ConfirmStep (CP-18) are still placeholders behind
+ * generic Back/Next controls until they replace this with real, self-gated forms. Neither
+ * resolved recipient nor resolved amount is threaded into further steps yet — that lands
+ * in CP-18, once ReviewStep actually has something to show for it. Each step's *draft* is
+ * lifted here so Back doesn't reset it — the step itself still owns its own form state,
+ * it's just seeded from and reported up to its draft.
  */
 export function SendMoneyPage() {
   const [stepId, setStepId] = useState<StepId>('recipient')
   const [recipientDraft, setRecipientDraft] = useState<RecipientDraft>(EMPTY_RECIPIENT_DRAFT)
+  const [amountDraft, setAmountDraft] = useState<AmountDraft>(EMPTY_AMOUNT_DRAFT)
   const headingRef = useRef<HTMLHeadingElement>(null)
 
   useEffect(() => {
@@ -57,7 +60,7 @@ export function SendMoneyPage() {
       <StepHeading ref={headingRef}>{sendMoneyCopy.stepTitles[stepId]}</StepHeading>
       <div className="flex flex-col gap-5 lg:flex-row lg:items-start">
         <div className="lg:flex-1">
-          {stepId === 'recipient' ? (
+          {stepId === 'recipient' && (
             <RecipientStep
               initialDraft={recipientDraft}
               onDraftChange={setRecipientDraft}
@@ -65,7 +68,20 @@ export function SendMoneyPage() {
                 setStepId(nextStepId(stepId))
               }}
             />
-          ) : (
+          )}
+          {stepId === 'amount' && (
+            <AmountStep
+              initialDraft={amountDraft}
+              onDraftChange={setAmountDraft}
+              onBack={() => {
+                setStepId(previousStepId(stepId))
+              }}
+              onNext={() => {
+                setStepId(nextStepId(stepId))
+              }}
+            />
+          )}
+          {(stepId === 'review' || stepId === 'confirm') && (
             <Card className="flex flex-col gap-4">
               <StatusAnnouncer message={null} />
               <p className="text-muted">{sendMoneyCopy.stepPlaceholders[stepId]}</p>

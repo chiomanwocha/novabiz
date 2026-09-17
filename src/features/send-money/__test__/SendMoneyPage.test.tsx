@@ -73,4 +73,34 @@ describe('SendMoneyPage', () => {
     expect(screen.getByLabelText('Account number')).toHaveValue(RECIPIENT_ACCOUNT_NUMBER)
     expect(screen.getByLabelText('Bank')).toHaveValue(RECIPIENT_BANK_CODE)
   })
+
+  it('going back to Amount from Review preserves the amount already entered', async () => {
+    setControls({ fixedLatencyMs: 0, failRate: 0, timeoutMode: false })
+    const user = userEvent.setup()
+    renderWithQueryClient(<SendMoneyPage />)
+
+    const bankSelect = screen.getByLabelText('Bank')
+    await within(bankSelect).findByRole(
+      'option',
+      { name: 'First Bank of Nigeria' },
+      { timeout: BANK_LIST_TIMEOUT_MS },
+    )
+    await user.selectOptions(bankSelect, RECIPIENT_BANK_CODE)
+    await user.type(screen.getByLabelText('Account number'), RECIPIENT_ACCOUNT_NUMBER)
+    const recipientNextButton = await screen.findByRole('button', { name: 'Next' })
+    await waitFor(() => {
+      expect(recipientNextButton).toBeEnabled()
+    })
+    await user.click(recipientNextButton)
+    await screen.findByRole('heading', { name: 'How much?' })
+
+    await user.type(screen.getByLabelText('Amount'), '1,000.50')
+    await user.click(screen.getByRole('button', { name: 'Next' }))
+    await screen.findByRole('heading', { name: 'Review your transfer' })
+
+    await user.click(screen.getByRole('button', { name: 'Back' }))
+
+    expect(await screen.findByRole('heading', { name: 'How much?' })).toHaveFocus()
+    expect(screen.getByLabelText('Amount')).toHaveValue('1,000.50')
+  })
 })

@@ -12,13 +12,23 @@ export const sendMoneyCopy = {
     review: 'Review',
     confirm: 'Confirm',
   },
-  // Placeholders until RecipientStep (CP-16), AmountStep (CP-17), and ReviewStep/ConfirmStep
-  // (CP-18) replace them with real form content.
+  // Placeholders until ReviewStep/ConfirmStep (CP-18) replace them with real form content.
   stepPlaceholders: {
-    recipient: 'Recipient details coming in CP-16.',
-    amount: 'Amount entry coming in CP-17.',
     review: 'Review coming in CP-18.',
     confirm: 'Confirm & send coming in CP-18.',
+  },
+  amountField: {
+    label: 'Amount',
+    hint: 'Enter an amount in Naira, e.g. 1,000.50',
+    narrationLabel: "What's this for? (optional)",
+    narrationHint: 'Up to 100 characters',
+  },
+  amountErrors: {
+    invalid: 'Enter an amount greater than zero',
+    overBalance: 'This is more than your available balance',
+    overSingleLimit: 'This is more than you can send in one transfer',
+    overDailyLimit: "This is more than what's left of today's sending limit",
+    narrationTooLong: 'Keep this to 100 characters or fewer',
   },
   // Shown beside the step card on wide screens only (StepContextPanel) — context that's true
   // of the finished design, not filler. Recipient's points describe what's actually live
