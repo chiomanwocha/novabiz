@@ -68,6 +68,9 @@ export function applyOptimisticTransfer(
   const updatedFirstPage: TransactionsPageDto = {
     nextCursor: firstPage?.nextCursor ?? null,
     transactions: [pendingRow, ...(firstPage?.transactions ?? [])],
+    // The optimistic row is a real addition to the (unfiltered) total too, so the "X of Y"
+    // count stays accurate immediately rather than lagging until onSettled's refetch.
+    total: (firstPage?.total ?? 0) + 1,
   }
 
   return {

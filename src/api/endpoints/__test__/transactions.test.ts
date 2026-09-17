@@ -2,7 +2,7 @@ import { http, HttpResponse } from 'msw'
 
 import { setupMockServer } from '../../../mocks/handlers/__test__/setupMockServer'
 import { server } from '../../../mocks/node'
-import { getTransactions } from '../transactions'
+import { getTransactions, transactionsQueryKey } from '../transactions'
 
 setupMockServer()
 
@@ -15,7 +15,7 @@ describe('getTransactions', () => {
         return HttpResponse.json({
           code: 200,
           message: 'OK',
-          data: { transactions: [], nextCursor: null },
+          data: { transactions: [], nextCursor: null, total: 0 },
         })
       }),
     )
@@ -32,7 +32,7 @@ describe('getTransactions', () => {
         return HttpResponse.json({
           code: 200,
           message: 'OK',
-          data: { transactions: [], nextCursor: null },
+          data: { transactions: [], nextCursor: null, total: 0 },
         })
       }),
     )
@@ -57,9 +57,26 @@ describe('getTransactions', () => {
     expect(params.get('q')).toBe('Ade')
   })
 
-  it('resolves a real page of transactions from the seeded data', async () => {
+  it('resolves a real page of transactions from the seeded data, with the total of every matching transaction', async () => {
     const page = await getTransactions({ limit: 5 })
     expect(page.transactions.length).toBe(5)
     expect(page.nextCursor).toBeTruthy()
+    expect(page.total).toBeGreaterThan(5)
+  })
+})
+
+describe('transactionsQueryKey', () => {
+  it('produces the same key for no filters and the full all-null shape useTransactionFilterParams always returns', () => {
+    expect(transactionsQueryKey({})).toEqual(
+      transactionsQueryKey({ from: null, to: null, status: null, type: null, q: null }),
+    )
+  })
+
+  it('produces the same key regardless of which optional fields are present', () => {
+    expect(transactionsQueryKey()).toEqual(transactionsQueryKey({ status: null }))
+  })
+
+  it('produces a different key when a real filter is applied', () => {
+    expect(transactionsQueryKey()).not.toEqual(transactionsQueryKey({ status: 'successful' }))
   })
 })

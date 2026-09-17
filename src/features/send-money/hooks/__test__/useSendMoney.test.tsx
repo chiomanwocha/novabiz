@@ -3,6 +3,7 @@ import { act, renderHook, waitFor } from '@testing-library/react'
 import type { ReactNode } from 'react'
 
 import { postNameEnquiry } from '../../../../api/endpoints/nameEnquiry'
+import { transactionsQueryKey } from '../../../../api/endpoints/transactions'
 import type { MerchantDto, TransactionsPageDto } from '../../../../api/types'
 import { toKobo } from '../../../../lib/money'
 import { setControls } from '../../../../mocks/controls'
@@ -39,14 +40,17 @@ const CLIENT_MERCHANT: MerchantDto = {
 }
 
 const CLIENT_TRANSACTIONS: InfiniteData<TransactionsPageDto> = {
-  pages: [{ transactions: [], nextCursor: null }],
+  pages: [{ transactions: [], nextCursor: null, total: 0 }],
   pageParams: [null],
 }
 
 function createSeededClient(): QueryClient {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
   client.setQueryData(['merchant'], CLIENT_MERCHANT)
-  client.setQueryData(['transactions', {}], CLIENT_TRANSACTIONS)
+  // Seeded at the same canonical key useTransactions() actually queries against (all five
+  // filter fields present, not `{}`) — this is what caught the real bug where useSendMoney's
+  // optimistic write targeted a cache entry nothing on the dashboard was reading.
+  client.setQueryData(transactionsQueryKey(), CLIENT_TRANSACTIONS)
   return client
 }
 
@@ -86,10 +90,8 @@ describe('useSendMoney', () => {
     })
 
     const merchant = client.getQueryData<MerchantDto>(['merchant'])
-    const transactions = client.getQueryData<InfiniteData<TransactionsPageDto>>([
-      'transactions',
-      {},
-    ])
+    const transactions =
+      client.getQueryData<InfiniteData<TransactionsPageDto>>(transactionsQueryKey())
     expect(merchant?.balanceKobo).toBe(20_000_00 - 100_050)
     expect(transactions?.pages[0]?.transactions[0]).toMatchObject({
       status: 'pending',
@@ -135,10 +137,8 @@ describe('useSendMoney', () => {
     })
 
     const merchant = client.getQueryData<MerchantDto>(['merchant'])
-    const transactions = client.getQueryData<InfiniteData<TransactionsPageDto>>([
-      'transactions',
-      {},
-    ])
+    const transactions =
+      client.getQueryData<InfiniteData<TransactionsPageDto>>(transactionsQueryKey())
     expect(merchant).toEqual(CLIENT_MERCHANT)
     expect(transactions).toEqual(CLIENT_TRANSACTIONS)
   })

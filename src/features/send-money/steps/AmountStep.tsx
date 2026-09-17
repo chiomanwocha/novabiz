@@ -1,5 +1,5 @@
 import { zodResolver } from '@hookform/resolvers/zod'
-import { useEffect } from 'react'
+import { useEffect, type ChangeEvent } from 'react'
 import { useForm, useWatch } from 'react-hook-form'
 
 import { formatKobo, parseNairaToKobo, toKobo, type Kobo } from '../../../lib/money'
@@ -10,6 +10,11 @@ import { ErrorState } from '../../../shared/ui/ErrorState'
 import { Input } from '../../../shared/ui/Input'
 import { Skeleton } from '../../../shared/ui/Skeleton'
 import { sendMoneyCopy } from '../copy'
+import {
+  countMeaningfulCharsBefore,
+  formatAmountInputValue,
+  positionAfterMeaningfulChars,
+} from '../logic/amountInputFormat'
 import { createAmountSchema, type AmountFormValues, type AmountLimits } from '../logic/schemas'
 
 export interface ResolvedAmount {
@@ -36,12 +41,14 @@ const ZERO_LIMITS: AmountLimits = {
 }
 
 /**
- * Validates on blur and on Next, not on every keystroke, per CLAUDE.md 6.4 (fewer re-renders
- * on the low-end phones these merchants use). The limits a given amount is checked against
- * come straight from the merchant record — never hard-coded — so the schema is rebuilt each
- * render from whatever `useMerchant` currently has. Hooks are still called unconditionally on
- * every render (the merchant loading/error states only change what JSX comes back, not which
- * hooks run), keeping this one component instead of splitting into a loader plus an inner form.
+ * The error *text* validates on blur, not on every keystroke, per CLAUDE.md 6.4 (fewer
+ * re-renders on the low-end phones these merchants use). Whether Next is *enabled* still
+ * reacts live to typing as well as blur — see `isFormValid` below for why that's judged
+ * separately from the error text. The limits a given amount is checked against come straight
+ * from the merchant record — never hard-coded — so the schema is rebuilt each render from
+ * whatever `useMerchant` currently has. Hooks are still called unconditionally on every render
+ * (the merchant loading/error states only change what JSX comes back, not which hooks run),
+ * keeping this one component instead of splitting into a loader plus an inner form.
  */
 export function AmountStep({
   initialDraft = EMPTY_DRAFT,
@@ -60,13 +67,16 @@ export function AmountStep({
       }
     : ZERO_LIMITS
 
+  const amountSchema = createAmountSchema(limits)
+
   const {
     register,
     handleSubmit,
     control,
+    setValue,
     formState: { errors },
   } = useForm<AmountFormValues>({
-    resolver: zodResolver(createAmountSchema(limits)),
+    resolver: zodResolver(amountSchema),
     mode: 'onBlur',
     reValidateMode: 'onBlur',
     defaultValues: initialDraft,
@@ -79,6 +89,33 @@ export function AmountStep({
       narration: watchedValues.narration ?? '',
     })
   }, [watchedValues.amountNaira, watchedValues.narration, onDraftChange])
+
+  // The red error text stays blur-gated (mode/reValidateMode: 'onBlur', above) — re-parsing on
+  // every keystroke just for that would mean the message flickers mid-type. But the Next
+  // button's disabled state is judged separately, live, straight off the schema (the single
+  // source of truth `errors` also comes from) — CLAUDE.md 6.4 says "validate on blur and on
+  // Next", but a Next button a merchant can still press while it's obviously invalid, only to
+  // be told so after tapping it, is worse than one that's visibly disabled until it's ready.
+  const isFormValid = amountSchema.safeParse({
+    amountNaira: watchedValues.amountNaira ?? '',
+    narration: watchedValues.narration ?? '',
+  }).success
+
+  // register('amountNaira') still supplies name/onBlur/ref (onBlur is what actually drives the
+  // 'onBlur' mode above); value/onChange are overridden below so the field can reformat itself
+  // as the user types (CLAUDE.md-standard controlled-field-on-top-of-register combination).
+  function handleAmountChange(event: ChangeEvent<HTMLInputElement>): void {
+    const input = event.target
+    const cursorPosition = input.selectionStart ?? input.value.length
+    const meaningfulCharsBeforeCursor = countMeaningfulCharsBefore(input.value, cursorPosition)
+
+    const formatted = formatAmountInputValue(input.value)
+    input.value = formatted
+    const newCursorPosition = positionAfterMeaningfulChars(formatted, meaningfulCharsBeforeCursor)
+    input.setSelectionRange(newCursorPosition, newCursorPosition)
+
+    setValue('amountNaira', formatted, { shouldDirty: true })
+  }
 
   if (merchantQuery.isPending) {
     return (
@@ -127,6 +164,8 @@ export function AmountStep({
           autoComplete="off"
           error={errors.amountNaira?.message}
           {...register('amountNaira')}
+          value={watchedValues.amountNaira ?? ''}
+          onChange={handleAmountChange}
         />
         <Input
           label={sendMoneyCopy.amountField.narrationLabel}
@@ -139,7 +178,9 @@ export function AmountStep({
           <Button type="button" variant="secondary" onClick={onBack}>
             Back
           </Button>
-          <Button type="submit">Next</Button>
+          <Button type="submit" disabled={!isFormValid}>
+            Next
+          </Button>
         </div>
       </form>
     </Card>

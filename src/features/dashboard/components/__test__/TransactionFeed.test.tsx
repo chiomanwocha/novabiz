@@ -5,7 +5,7 @@ import { http, HttpResponse } from 'msw'
 import { setControls } from '../../../../mocks/controls'
 import { setupMockServer } from '../../../../mocks/handlers/__test__/setupMockServer'
 import { server } from '../../../../mocks/node'
-import { renderWithQueryClient } from '../../../../test/renderWithQueryClient'
+import { renderWithQueryClient } from '../../../../testUtils/renderWithQueryClient'
 import { TransactionFeed } from '../TransactionFeed'
 
 setupMockServer()
@@ -55,13 +55,43 @@ describe('TransactionFeed', () => {
     })
   })
 
+  it('shows how many transactions have loaded out of the total matching the filters', async () => {
+    server.use(
+      http.get('/api/transactions', () =>
+        HttpResponse.json({
+          code: 200,
+          message: 'OK',
+          data: {
+            transactions: Array.from({ length: 12 }, (_, index) => ({
+              id: `txn-${String(index)}`,
+              type: 'credit',
+              status: 'successful',
+              amountKobo: 5000,
+              counterpartyName: 'Chidi Eze',
+              counterpartyAccountNumber: '0099887766',
+              counterpartyBankCode: '058',
+              counterpartyBankName: 'GTBank',
+              description: 'Stock payment',
+              occurredAt: '2026-09-16T10:00:00.000Z',
+            })),
+            nextCursor: null,
+            total: 12,
+          },
+        }),
+      ),
+    )
+    renderWithQueryClient(<TransactionFeed />)
+
+    expect(await screen.findByText('12 of 12')).toBeInTheDocument()
+  })
+
   it('shows an empty state when there are no matching transactions', async () => {
     server.use(
       http.get('/api/transactions', () =>
         HttpResponse.json({
           code: 200,
           message: 'OK',
-          data: { transactions: [], nextCursor: null },
+          data: { transactions: [], nextCursor: null, total: 0 },
         }),
       ),
     )

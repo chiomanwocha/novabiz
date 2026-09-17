@@ -1,4 +1,4 @@
-import { toKobo } from '../../../../lib/money'
+import { formatKobo, toKobo } from '../../../../lib/money'
 import { createAmountSchema, type AmountLimits } from '../schemas'
 
 const LIMITS: AmountLimits = {
@@ -21,26 +21,30 @@ describe('createAmountSchema', () => {
     expect(amountError('1.234')).toBe('Enter an amount greater than zero')
   })
 
-  it('rejects an amount over the available balance', () => {
+  it('rejects an amount over the available balance, naming the actual available balance', () => {
+    const balanceKobo = toKobo(1_000_00)
     const result = createAmountSchema({
       ...LIMITS,
-      balanceKobo: toKobo(1_000_00),
+      balanceKobo,
       singleTransferLimitKobo: toKobo(500_000),
     }).safeParse({ amountNaira: '2,000.00', narration: '' })
     expect(result.success).toBe(false)
     expect(!result.success && result.error.issues[0]?.message).toBe(
-      'This is more than your available balance',
+      `This is more than your available balance of ${formatKobo(balanceKobo)}`,
     )
   })
 
-  it('rejects an amount over the single-transfer limit', () => {
-    expect(amountError('5,500.00')).toBe('This is more than you can send in one transfer')
+  it('rejects an amount over the single-transfer limit, naming the actual per-transfer limit', () => {
+    expect(amountError('5,500.00')).toBe(
+      `This is more than you can send in one transfer. You can send up to ${formatKobo(LIMITS.singleTransferLimitKobo)} at a time.`,
+    )
   })
 
-  it("rejects an amount over what's left of the daily limit", () => {
+  it("rejects an amount over what's left of the daily limit, naming what's actually left", () => {
+    const remainingDailyLimitKobo = toKobo(100_00)
     const tightLimits: AmountLimits = {
       ...LIMITS,
-      remainingDailyLimitKobo: toKobo(100_00),
+      remainingDailyLimitKobo,
     }
     const result = createAmountSchema(tightLimits).safeParse({
       amountNaira: '200.00',
@@ -48,7 +52,7 @@ describe('createAmountSchema', () => {
     })
     expect(result.success).toBe(false)
     expect(!result.success && result.error.issues[0]?.message).toBe(
-      "This is more than what's left of today's sending limit",
+      `This is more than what's left of today's sending limit — ${formatKobo(remainingDailyLimitKobo)} remaining today`,
     )
   })
 

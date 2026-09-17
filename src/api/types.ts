@@ -40,6 +40,8 @@ export interface TransactionDto {
 export interface TransactionsPageDto {
   transactions: TransactionDto[]
   nextCursor: string | null
+  /** Count of every transaction matching the current filters, not just this page — lets the UI show "X of Y loaded". */
+  total: number
 }
 
 export interface NameEnquiryResponseDto {

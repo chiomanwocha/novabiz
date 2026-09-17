@@ -1,4 +1,4 @@
-import type { ChangeEvent, ClipboardEvent } from 'react'
+import { useState, type ChangeEvent, type ClipboardEvent } from 'react'
 
 import { isValidNubanCheckDigit, sanitiseAccountInput } from '../../../lib/nuban'
 import { Input } from '../../../shared/ui/Input'
@@ -33,7 +33,15 @@ function computeError(
 /**
  * Sanitises pasted input (strips spaces/dashes/etc.) but never silently truncates it —
  * more than 10 digits shows the "Enter all 10 digits" error instead of quietly cutting
- * digits off, per CLAUDE.md 6.3.
+ * digits off, per CLAUDE.md 6.3. Typing, unlike pasting, is capped at 10 characters via the
+ * native `maxLength` — the browser simply stops accepting further keystrokes once at the
+ * limit (this doesn't affect the paste path above, since that's applied programmatically
+ * via React's controlled `value`, which `maxLength` doesn't enforce against).
+ *
+ * Validates on blur, not on every keystroke, matching how a traditional bank form behaves:
+ * no error shows until the field has been left at least once, and typing again after that
+ * first blur clears the stale error immediately rather than leaving it up while re-editing —
+ * the next blur is what re-validates.
  */
 export function AccountNumberField({
   value,
@@ -41,15 +49,21 @@ export function AccountNumberField({
   bankCode,
   bankName,
 }: AccountNumberFieldProps) {
-  const error = computeError(value, bankCode, bankName)
+  const [blurredError, setBlurredError] = useState<string | undefined>(undefined)
 
   function handleChange(event: ChangeEvent<HTMLInputElement>): void {
     onChange(sanitiseAccountInput(event.target.value))
+    setBlurredError(undefined)
   }
 
   function handlePaste(event: ClipboardEvent<HTMLInputElement>): void {
     event.preventDefault()
     onChange(sanitiseAccountInput(event.clipboardData.getData('text')))
+    setBlurredError(undefined)
+  }
+
+  function handleBlur(): void {
+    setBlurredError(computeError(value, bankCode, bankName))
   }
 
   return (
@@ -58,10 +72,12 @@ export function AccountNumberField({
       hint="10-digit account number"
       inputMode="numeric"
       autoComplete="off"
+      maxLength={10}
       value={value}
       onChange={handleChange}
       onPaste={handlePaste}
-      error={error}
+      onBlur={handleBlur}
+      error={blurredError}
     />
   )
 }

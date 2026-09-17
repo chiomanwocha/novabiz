@@ -20,7 +20,7 @@ const MERCHANT: MerchantDto = {
 
 describe('BalanceSummary', () => {
   it('formats the balance and today totals as Naira, never as raw kobo', () => {
-    render(<BalanceSummary merchant={MERCHANT} />)
+    render(<BalanceSummary merchant={MERCHANT} isBalanceVisible onToggleVisibility={vi.fn()} />)
 
     expect(screen.getByText('₦314,500.75')).toBeInTheDocument()
     expect(screen.getByText('₦5,000.00')).toBeInTheDocument()
@@ -28,22 +28,39 @@ describe('BalanceSummary', () => {
   })
 
   it('shows the merchant KYC tier', () => {
-    render(<BalanceSummary merchant={MERCHANT} />)
+    render(<BalanceSummary merchant={MERCHANT} isBalanceVisible onToggleVisibility={vi.fn()} />)
 
     expect(screen.getByText('Tier 2')).toBeInTheDocument()
   })
 
-  it('hides and re-shows the balance figure without affecting today totals', async () => {
-    const user = userEvent.setup()
-    render(<BalanceSummary merchant={MERCHANT} />)
+  // Hiding used to mask only the hero balance figure and leave today's totals visible, which
+  // defeats the point of a shared-screen privacy toggle, so all three now mask together. The
+  // toggle's own state now lives in DashboardPage (so it can reach InsightsPanel/
+  // TransactionFeed too), so this component is tested as the controlled component it now is,
+  // not as the owner of its own visibility state.
+  it('masks the balance and today totals together when isBalanceVisible is false', () => {
+    render(
+      <BalanceSummary merchant={MERCHANT} isBalanceVisible={false} onToggleVisibility={vi.fn()} />,
+    )
 
-    expect(screen.getByText('₦314,500.75')).toBeInTheDocument()
+    expect(screen.queryByText('₦314,500.75')).not.toBeInTheDocument()
+    expect(screen.queryByText('₦5,000.00')).not.toBeInTheDocument()
+    expect(screen.queryByText('₦3,000.00')).not.toBeInTheDocument()
+    expect(screen.getAllByText('••••')).toHaveLength(3)
+  })
+
+  it('calls onToggleVisibility when the eye button is clicked', async () => {
+    const user = userEvent.setup()
+    const onToggleVisibility = vi.fn()
+    render(
+      <BalanceSummary
+        merchant={MERCHANT}
+        isBalanceVisible
+        onToggleVisibility={onToggleVisibility}
+      />,
+    )
 
     await user.click(screen.getByRole('button', { name: 'Hide balance' }))
-    expect(screen.queryByText('₦314,500.75')).not.toBeInTheDocument()
-    expect(screen.getByText('₦5,000.00')).toBeInTheDocument()
-
-    await user.click(screen.getByRole('button', { name: 'Show balance' }))
-    expect(screen.getByText('₦314,500.75')).toBeInTheDocument()
+    expect(onToggleVisibility).toHaveBeenCalledOnce()
   })
 })

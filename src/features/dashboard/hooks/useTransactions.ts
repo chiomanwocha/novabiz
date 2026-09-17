@@ -1,13 +1,17 @@
 import { useInfiniteQuery } from '@tanstack/react-query'
 
-import { getTransactions, type GetTransactionsParams } from '../../../api/endpoints/transactions'
+import {
+  getTransactions,
+  transactionsQueryKey,
+  type TransactionFilters,
+} from '../../../api/endpoints/transactions'
 
-export type TransactionFilters = Omit<GetTransactionsParams, 'cursor' | 'limit'>
+export type { TransactionFilters }
 
 /** Newest-first, cursor-paginated transaction pages — one page fetched per call to fetchNextPage. */
 export function useTransactions(filters: TransactionFilters = {}) {
   return useInfiniteQuery({
-    queryKey: ['transactions', filters],
+    queryKey: transactionsQueryKey(filters),
     queryFn: ({ pageParam }: { pageParam: string | null }) =>
       getTransactions({ ...filters, cursor: pageParam }),
     initialPageParam: null as string | null,

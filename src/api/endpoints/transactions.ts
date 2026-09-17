@@ -11,6 +11,28 @@ export interface GetTransactionsParams {
   q?: string | null
 }
 
+export type TransactionFilters = Omit<GetTransactionsParams, 'cursor' | 'limit'>
+
+/**
+ * Normalises any partial filters object (`{}`, or the full `{ from: null, to: null, ... }`
+ * shape `useTransactionFilterParams` always returns) to the same canonical key — two callers
+ * describing "no filters" differently used to produce two different TanStack Query cache
+ * entries, so `useSendMoney`'s optimistic write silently landed on an entry nothing was
+ * subscribed to and the dashboard only ever caught up via the slower onSettled refetch.
+ */
+export function transactionsQueryKey(filters: TransactionFilters = {}) {
+  return [
+    'transactions',
+    {
+      from: filters.from ?? null,
+      to: filters.to ?? null,
+      status: filters.status ?? null,
+      type: filters.type ?? null,
+      q: filters.q ?? null,
+    },
+  ] as const
+}
+
 export function getTransactions(params: GetTransactionsParams = {}): Promise<TransactionsPageDto> {
   const search = new URLSearchParams()
   if (params.cursor) search.set('cursor', params.cursor)

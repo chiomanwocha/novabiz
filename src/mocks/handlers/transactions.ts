@@ -7,6 +7,28 @@ import type { Transaction, TransactionStatus, TransactionType } from '../db/type
 
 import { errorResponse, okResponse } from './envelope'
 
+/**
+ * `filters.from`/`filters.to` arrive as bare `YYYY-MM-DD` strings built from the *local*
+ * calendar day the merchant picked (see `DateRangeField#toIsoDate`, which reads
+ * `getFullYear`/`getMonth`/`getDate`). `new Date("YYYY-MM-DD")` instead parses a date-only
+ * string as **UTC** midnight, not local midnight — a mismatch that made picking a single day
+ * (from and to both that day) match almost nothing, since `to` capped the range at an instant
+ * hours before the local day had even finished, while a wider range leaked in slivers of the
+ * neighbouring day. Parsing with explicit Y/M/D components (local time, like `DateRangeField`
+ * already does) instead of handing the raw string to `Date` keeps both sides using the same
+ * definition of "day" — and `to` is end-of-day here, not start-of-day, since the whole
+ * selected day should be included, not excluded.
+ */
+function startOfLocalDay(dateOnly: string): number {
+  const [year, month, day] = dateOnly.split('-').map(Number)
+  return new Date(year ?? 0, (month ?? 1) - 1, day ?? 1, 0, 0, 0, 0).getTime()
+}
+
+function endOfLocalDay(dateOnly: string): number {
+  const [year, month, day] = dateOnly.split('-').map(Number)
+  return new Date(year ?? 0, (month ?? 1) - 1, day ?? 1, 23, 59, 59, 999).getTime()
+}
+
 function matchesFilters(
   transaction: Transaction,
   filters: {
@@ -19,10 +41,10 @@ function matchesFilters(
 ): boolean {
   const occurredAt = new Date(transaction.occurredAt).getTime()
 
-  if (filters.from && occurredAt < new Date(filters.from).getTime()) {
+  if (filters.from && occurredAt < startOfLocalDay(filters.from)) {
     return false
   }
-  if (filters.to && occurredAt > new Date(filters.to).getTime()) {
+  if (filters.to && occurredAt > endOfLocalDay(filters.to)) {
     return false
   }
   if (filters.status && transaction.status !== (filters.status as TransactionStatus)) {
@@ -76,6 +98,6 @@ export const transactionHandlers = [
     const filtered = getTransactions().filter((transaction) => matchesFilters(transaction, filters))
     const { page, nextCursor } = paginate(filtered, cursor, limit)
 
-    return okResponse({ transactions: page, nextCursor })
+    return okResponse({ transactions: page, nextCursor, total: filtered.length })
   }),
 ]

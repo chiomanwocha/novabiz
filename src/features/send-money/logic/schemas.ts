@@ -1,7 +1,7 @@
 import { z } from 'zod'
 
 import type { Kobo } from '../../../lib/money'
-import { parseNairaToKobo } from '../../../lib/money'
+import { formatKobo, parseNairaToKobo } from '../../../lib/money'
 import { sendMoneyCopy } from '../copy'
 
 const NARRATION_MAX_LENGTH = 100
@@ -45,7 +45,7 @@ export function createAmountSchema(limits: AmountLimits) {
         ctx.addIssue({
           code: 'custom',
           path: ['amountNaira'],
-          message: sendMoneyCopy.amountErrors.overBalance,
+          message: sendMoneyCopy.amountErrors.overBalance(formatKobo(limits.balanceKobo)),
         })
         return
       }
@@ -53,7 +53,9 @@ export function createAmountSchema(limits: AmountLimits) {
         ctx.addIssue({
           code: 'custom',
           path: ['amountNaira'],
-          message: sendMoneyCopy.amountErrors.overSingleLimit,
+          message: sendMoneyCopy.amountErrors.overSingleLimit(
+            formatKobo(limits.singleTransferLimitKobo),
+          ),
         })
         return
       }
@@ -61,7 +63,9 @@ export function createAmountSchema(limits: AmountLimits) {
         ctx.addIssue({
           code: 'custom',
           path: ['amountNaira'],
-          message: sendMoneyCopy.amountErrors.overDailyLimit,
+          message: sendMoneyCopy.amountErrors.overDailyLimit(
+            formatKobo(limits.remainingDailyLimitKobo),
+          ),
         })
       }
     })

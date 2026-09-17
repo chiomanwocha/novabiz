@@ -47,5 +47,7 @@ test('completes the whole flow using only the keyboard', async ({ page }) => {
   await page.getByRole('button', { name: 'Send money' }).focus()
   await page.keyboard.press('Enter')
 
-  await expect(page.getByText('Transfer sent')).toBeVisible()
+  // { exact: true }: the success view also shows a distinct "Transfer sent!" headline —
+  // Playwright's getByText is substring-matching by default, so without this it'd match both.
+  await expect(page.getByText('Transfer sent', { exact: true })).toBeVisible()
 })

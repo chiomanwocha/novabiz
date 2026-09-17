@@ -20,8 +20,24 @@ export const sendMoneyCopy = {
   },
   confirm: {
     sendButton: 'Send money',
+    // Was "Last step" — a progress label that didn't tell a merchant what to actually do
+    // here (the stepper already shows they're on the last step). This tells them the point
+    // of the screen instead: look once more, then send.
+    panelHeading: 'Check before you send',
+    // Real, new information — not decoration — is what actually separates this step from
+    // Review: Review shows every detail so a merchant can catch a typo, Confirm exists
+    // specifically because sending is irreversible, so this line says that plainly instead
+    // of just repeating the same recipient/amount recap a second time.
+    irreversibleNotice: "This can't be undone once it's sent.",
     sendingMessage: 'Sending…',
+    // Two distinct strings on purpose: `successMessage` is what the aria-live StatusAnnouncer
+    // announces (unchanged from before this heading existed, so existing text-based e2e
+    // locators for it still resolve to exactly one match), `successHeading` is the big visible
+    // headline on the dedicated success view — visually louder, but never the literal same
+    // string, so nothing that queries by exact text ever has to disambiguate two "Transfer
+    // sent" nodes.
     successMessage: 'Transfer sent',
+    successHeading: 'Transfer sent!',
     genericFailureMessage:
       "We couldn't confirm your transfer. Please check your balance and try again.",
     unconfirmedMessage: "We couldn't confirm what happened yet — checking…",
@@ -35,9 +51,15 @@ export const sendMoneyCopy = {
   },
   amountErrors: {
     invalid: 'Enter an amount greater than zero',
-    overBalance: 'This is more than your available balance',
-    overSingleLimit: 'This is more than you can send in one transfer',
-    overDailyLimit: "This is more than what's left of today's sending limit",
+    // Each of these takes the already-formatted limit (e.g. "₦5,000.00") so the message
+    // itself answers "how much *can* I send", rather than just saying an amount is too much
+    // and leaving the number to a separate hint line the user may not be looking at.
+    overBalance: (availableFormatted: string) =>
+      `This is more than your available balance of ${availableFormatted}`,
+    overSingleLimit: (singleLimitFormatted: string) =>
+      `This is more than you can send in one transfer. You can send up to ${singleLimitFormatted} at a time.`,
+    overDailyLimit: (remainingFormatted: string) =>
+      `This is more than what's left of today's sending limit — ${remainingFormatted} remaining today`,
     narrationTooLong: 'Keep this to 100 characters or fewer',
   },
   // Shown beside the step card on wide screens only (StepContextPanel) — context that's true

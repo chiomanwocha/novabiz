@@ -50,9 +50,13 @@ export function RecipientStep({ initialDraft, onDraftChange, onNext }: Recipient
   const [bankCode, setBankCode] = useState<string | null>(initialDraft?.bankCode ?? null)
   const [accountNumber, setAccountNumber] = useState(initialDraft?.accountNumber ?? '')
 
+  // Changing the bank clears whatever account number was typed for the previous one — a
+  // number that's valid (or already resolved to a name) for one bank isn't meaningful for
+  // a different bank, so keeping it around would show a stale, possibly-wrong-looking state.
   function updateBankCode(nextBankCode: string | null): void {
     setBankCode(nextBankCode)
-    onDraftChange?.({ bankCode: nextBankCode, accountNumber })
+    setAccountNumber('')
+    onDraftChange?.({ bankCode: nextBankCode, accountNumber: '' })
   }
 
   function updateAccountNumber(nextAccountNumber: string): void {
@@ -106,10 +110,29 @@ export function RecipientStep({ initialDraft, onDraftChange, onNext }: Recipient
         bankCode={bankCode}
         bankName={selectedBank?.name ?? null}
       />
-      <StatusAnnouncer
-        message={statusMessage}
-        isError={enquiry.status === 'error' || isOwnAccount}
-      />
+      {enquiry.status === 'error' &&
+      (enquiry.reason === 'timeout' || enquiry.reason === 'network') ? (
+        // The Card's own flex-col container stretches a lone child to full width by
+        // default (no `items-start` there) — that's what made a standalone Retry button
+        // span the whole card. Pairing it in a row fixed that, but `justify-between` then
+        // pushed the button to the row's far right edge — landing it directly above the
+        // Next button below (also right-aligned), which read as two stacked, related CTAs.
+        // Letting the button sit immediately after the text instead (no `justify-between`,
+        // no `flex-1` growing the text to push it away) keeps it beside its message and off
+        // that shared right edge; `flex-wrap` lets it drop to its own line on narrow screens
+        // rather than forcing the row to overflow.
+        <div className="flex flex-wrap items-center gap-3">
+          <StatusAnnouncer message={statusMessage} isError />
+          <Button variant="secondary" onClick={enquiry.retry} className="shrink-0">
+            Retry
+          </Button>
+        </div>
+      ) : (
+        <StatusAnnouncer
+          message={statusMessage}
+          isError={enquiry.status === 'error' || isOwnAccount}
+        />
+      )}
       {enquiry.status === 'resolved' && !isOwnAccount && selectedBank && (
         <ResolvedNameCard
           accountName={enquiry.name}
@@ -117,12 +140,6 @@ export function RecipientStep({ initialDraft, onDraftChange, onNext }: Recipient
           accountNumber={accountNumber}
         />
       )}
-      {enquiry.status === 'error' &&
-        (enquiry.reason === 'timeout' || enquiry.reason === 'network') && (
-          <Button variant="secondary" onClick={enquiry.retry}>
-            Retry
-          </Button>
-        )}
       <div className="flex justify-end">
         <Button onClick={handleNext} disabled={!canContinue}>
           Next

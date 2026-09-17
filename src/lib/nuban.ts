@@ -4,10 +4,16 @@
  * with "000" to make a 6-digit institution code, which combines with the 9-digit
  * account serial into a 15-digit sequence for the weighted checksum.
  *
- * Algorithm verified against two independently published worked examples before use
- * (see BUILD_LOG "Review this" for the sources and the cross-check):
+ * Algorithm sourced from a write-up of the CBN scheme
+ * (danielokoronkwo.com/post/reverse-engineering-nigeria-nuban-system) and cross-checked
+ * against a second independent implementation (github.com/Zifah/Nigeria-Bank-Account-NUBAN-Algorithm)
+ * using two worked examples before use:
  *   - bank 011, serial 000001457 -> check digit 9 -> account 0000014579
  *   - bank 058, serial 001656322 -> check digit 8 -> account 0016563228
+ *
+ * The primary CBN circular itself was not directly accessible to verify against, so treat
+ * this as a well-corroborated secondary source rather than a primary-source guarantee —
+ * see GUIDE.md "Account number validation" for the full caveat.
  *
  * This is an early typo catcher, not the final authority — the mock name-enquiry
  * endpoint is the source of truth, and the server re-validates the check digit too.

@@ -10,7 +10,7 @@ export interface BadgeProps {
 const TONE_CLASSES: Record<BadgeTone, string> = {
   success: 'bg-success-bg text-success',
   danger: 'bg-danger-bg text-danger',
-  warning: 'bg-warning/10 text-warning',
+  warning: 'bg-warning-bg text-warning',
   neutral: 'bg-muted/10 text-muted',
 }
 

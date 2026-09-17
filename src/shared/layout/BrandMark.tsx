@@ -5,8 +5,8 @@ export interface BrandMarkProps {
 
 /**
  * The NovaBiz wordmark and logo mark. The mark is a placeholder monogram, not the real
- * FirstBank elephant logo — see BUILD_LOG "Review this" for swapping in the real asset once
- * Chioma has it, same treatment as the placeholder brand colours in theme/tokens.css.
+ * FirstBank elephant logo — swap in the real asset once available, same treatment as the
+ * placeholder brand colours in theme/tokens.css.
  */
 export function BrandMark({ inverted = false }: BrandMarkProps) {
   return (

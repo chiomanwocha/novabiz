@@ -1,6 +1,7 @@
 import { useQueryClient, useMutation, type InfiniteData } from '@tanstack/react-query'
 import { useState } from 'react'
 
+import { transactionsQueryKey } from '../../../api/endpoints/transactions'
 import {
   getTransferStatus,
   postTransfer,
@@ -22,8 +23,11 @@ const MERCHANT_QUERY_KEY = ['merchant']
 // dashboard tab mid-send won't see the pending row until onSettled's invalidate corrects
 // it moments later. Prepending correctly into every possible filter combination would need
 // a client-side re-implementation of the server's own filter matching; not worth it for a
-// window that's only ever a few hundred ms wide. Flagged in BUILD_LOG's "Review this".
-const TRANSACTIONS_QUERY_KEY = ['transactions', {}]
+// window that's only ever a few hundred ms wide.
+// `transactionsQueryKey()` (no filters) must match exactly what useTransactions produces for
+// the dashboard's default, unfiltered view — see that function's own comment for the bug this
+// normalisation fixes.
+const TRANSACTIONS_QUERY_KEY = transactionsQueryKey()
 
 export interface SendMoneyInput {
   idempotencyKey: string

@@ -3,9 +3,13 @@ import { memo } from 'react'
 import type { TransactionDto, TransactionStatus } from '../../../api/types'
 import { formatKobo } from '../../../lib/money'
 import { Badge, type BadgeTone } from '../../../shared/ui/Badge'
+import { dashboardCopy } from '../copy'
 
 export interface TransactionRowProps {
   transaction: TransactionDto
+  /** Mirrors BalanceSummary's hide-balance toggle so amounts in the feed mask together with
+   * every other figure on the dashboard. Defaults true so existing callers/stories are unaffected. */
+  isAmountVisible?: boolean
 }
 
 const STATUS_TONE: Record<TransactionStatus, BadgeTone> = {
@@ -20,13 +24,19 @@ const STATUS_LABEL: Record<TransactionStatus, string> = {
   pending: 'Pending',
 }
 
-const timeFormatter = new Intl.DateTimeFormat('en-NG', { hour: 'numeric', minute: '2-digit' })
+const dateTimeFormatter = new Intl.DateTimeFormat('en-NG', {
+  day: 'numeric',
+  month: 'short',
+  year: 'numeric',
+  hour: 'numeric',
+  minute: '2-digit',
+})
 
-function TransactionRowComponent({ transaction }: TransactionRowProps) {
+function TransactionRowComponent({ transaction, isAmountVisible = true }: TransactionRowProps) {
   const isCredit = transaction.type === 'credit'
 
   return (
-    <div className="flex h-full items-center justify-between gap-3 border-b border-border px-1 transition hover:bg-surface-hover">
+    <div className="flex h-full items-center justify-between gap-3 border-b border-border px-1 transition hover:bg-text/5">
       <div className="flex min-w-0 items-center gap-3">
         <span
           aria-hidden="true"
@@ -46,13 +56,19 @@ function TransactionRowComponent({ transaction }: TransactionRowProps) {
       </div>
       <div className="flex shrink-0 flex-col items-end gap-1">
         <span className={`text-sm font-semibold ${isCredit ? 'text-success' : 'text-danger'}`}>
-          {isCredit ? '+' : '-'}
-          {formatKobo(transaction.amountKobo)}
+          {isAmountVisible ? (
+            <>
+              {isCredit ? '+' : '-'}
+              {formatKobo(transaction.amountKobo)}
+            </>
+          ) : (
+            dashboardCopy.maskedFigure
+          )}
         </span>
         <div className="flex items-center gap-2">
           <Badge tone={STATUS_TONE[transaction.status]}>{STATUS_LABEL[transaction.status]}</Badge>
-          <span className="text-xs text-muted">
-            {timeFormatter.format(new Date(transaction.occurredAt))}
+          <span className="whitespace-nowrap text-xs text-muted">
+            {dateTimeFormatter.format(new Date(transaction.occurredAt))}
           </span>
         </div>
       </div>

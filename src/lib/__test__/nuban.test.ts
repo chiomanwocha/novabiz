@@ -6,8 +6,8 @@ import {
   suggestBanks,
 } from '../nuban'
 
-// Valid vectors: the first two are worked examples from published NUBAN documentation
-// (see BUILD_LOG "Review this" for sources); the third was generated with this same
+// Valid vectors: the first two are worked examples from published NUBAN documentation (see
+// the source links in nuban.ts's module comment); the third was generated with this same
 // verified algorithm to cover a third bank code.
 const VALID_VECTORS = [
   { bankCode: '011', accountNumber: '0000014579', bankName: 'First Bank' },

@@ -4,7 +4,7 @@ import type { ReactNode } from 'react'
 
 import { setControls } from '../../../../mocks/controls'
 import { setupMockServer } from '../../../../mocks/handlers/__test__/setupMockServer'
-import { createTestQueryClient } from '../../../../test/queryClient'
+import { createTestQueryClient } from '../../../../testUtils/queryClient'
 import { useBanks } from '../useBanks'
 
 setupMockServer()

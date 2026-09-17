@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event'
 
 import { setControls } from '../../../mocks/controls'
 import { setupMockServer } from '../../../mocks/handlers/__test__/setupMockServer'
-import { renderWithQueryClient } from '../../../test/renderWithQueryClient'
+import { renderWithQueryClient } from '../../../testUtils/renderWithQueryClient'
 import { SendMoneyPage } from '../SendMoneyPage'
 
 setupMockServer()

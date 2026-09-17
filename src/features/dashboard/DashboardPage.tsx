@@ -1,3 +1,5 @@
+import { useState } from 'react'
+
 import { useMerchant } from '../../shared/hooks/useMerchant'
 import { useRetry } from '../../shared/hooks/useRetry'
 import { ErrorState } from '../../shared/ui/ErrorState'
@@ -18,19 +20,44 @@ export function DashboardPage() {
   const merchantQuery = useMerchant()
   const retryMerchant = useRetry(merchantQuery)
   const { filters, setFilters } = useTransactionFilterParams()
+  const [isBalanceVisible, setIsBalanceVisible] = useState(true)
 
   if (merchantQuery.isPending) {
     return (
-      <div aria-busy="true" className="flex flex-col gap-4">
+      // Mirrors the real page section-for-section (greeting row, balance hero, insights
+      // bento grid, filters toolbar, feed rows) rather than a handful of generic blocks —
+      // the previous version used a 4-column insights grid (the real one is 3) and had
+      // nothing at all standing in for the filters row or more than one feed row, so the
+      // page visibly reflowed the moment real content replaced it.
+      <div aria-busy="true" className="flex flex-col gap-5">
         <VisuallyHidden>{dashboardCopy.loadingLabel}</VisuallyHidden>
-        <Skeleton className="h-40 w-full" />
-        <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-          <Skeleton className="h-20 w-full" />
-          <Skeleton className="h-20 w-full" />
-          <Skeleton className="h-20 w-full" />
-          <Skeleton className="h-20 w-full" />
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <Skeleton className="h-7 w-48" />
+          <Skeleton className="h-11 w-36" />
         </div>
-        <Skeleton className="h-24 w-full" />
+        <Skeleton className="h-48 w-full" />
+        <div className="grid grid-flow-dense grid-cols-2 gap-3 lg:grid-cols-3">
+          <Skeleton className="h-24 w-full" />
+          <Skeleton className="col-span-2 h-24 w-full" />
+          <Skeleton className="h-24 w-full" />
+          <Skeleton className="h-24 w-full" />
+          <Skeleton className="h-24 w-full" />
+        </div>
+        <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+          <Skeleton className="h-11 w-full lg:w-80" />
+          <div className="flex flex-wrap gap-3">
+            <Skeleton className="h-11 w-36" />
+            <Skeleton className="h-11 w-32" />
+            <Skeleton className="h-11 w-40" />
+          </div>
+        </div>
+        <div className="flex flex-col gap-2 rounded-xl border border-border p-2">
+          <Skeleton className="h-16 w-full" />
+          <Skeleton className="h-16 w-full" />
+          <Skeleton className="h-16 w-full" />
+          <Skeleton className="h-16 w-full" />
+          <Skeleton className="h-16 w-full" />
+        </div>
       </div>
     )
   }
@@ -47,10 +74,16 @@ export function DashboardPage() {
         </h1>
         <LinkButton to="/send">Send Money</LinkButton>
       </div>
-      <BalanceSummary merchant={merchantQuery.data} />
-      <InsightsPanel merchant={merchantQuery.data} />
+      <BalanceSummary
+        merchant={merchantQuery.data}
+        isBalanceVisible={isBalanceVisible}
+        onToggleVisibility={() => {
+          setIsBalanceVisible((visible) => !visible)
+        }}
+      />
+      <InsightsPanel merchant={merchantQuery.data} isBalanceVisible={isBalanceVisible} />
       <TransactionFilters value={filters} onChange={setFilters} />
-      <TransactionFeed filters={filters} />
+      <TransactionFeed filters={filters} isAmountVisible={isBalanceVisible} />
     </div>
   )
 }

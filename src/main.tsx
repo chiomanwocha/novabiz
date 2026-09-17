@@ -4,11 +4,12 @@ import { createRoot } from 'react-dom/client'
 import App from './app/App.tsx'
 import './index.css'
 import { loadControlsFromSearchParams } from './mocks/controls'
-import { shouldForceReloadForWorkerControl } from './mocks/ensureWorkerControlled'
+import {
+  MSW_RELOAD_GUARD_KEY,
+  shouldForceReloadForWorkerControl,
+} from './mocks/ensureWorkerControlled'
 
 loadControlsFromSearchParams(window.location.search)
-
-const RELOAD_GUARD_KEY = 'novabiz-msw-reload-guard'
 
 /**
  * A hard reload can leave the page uncontrolled by the (still active) mock service worker,
@@ -21,18 +22,18 @@ async function startMockServiceWorkerIfNeeded(): Promise<boolean> {
   const { worker } = await import('./mocks/browser')
   await worker.start({ onUnhandledRequest: 'bypass' })
 
-  const alreadyAttemptedReload = sessionStorage.getItem(RELOAD_GUARD_KEY) === '1'
+  const alreadyAttemptedReload = sessionStorage.getItem(MSW_RELOAD_GUARD_KEY) === '1'
   if (
     shouldForceReloadForWorkerControl({
       isControlled: navigator.serviceWorker.controller !== null,
       alreadyAttemptedReload,
     })
   ) {
-    sessionStorage.setItem(RELOAD_GUARD_KEY, '1')
+    sessionStorage.setItem(MSW_RELOAD_GUARD_KEY, '1')
     window.location.reload()
     return false
   }
-  sessionStorage.removeItem(RELOAD_GUARD_KEY)
+  sessionStorage.removeItem(MSW_RELOAD_GUARD_KEY)
   return true
 }
 

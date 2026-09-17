@@ -22,7 +22,7 @@ describe('App', () => {
     render(<App />)
     // RTL's default findBy timeout (1000ms) is occasionally too tight for this file's very
     // first render under full-suite CPU contention, even with mock latency pinned to 0 —
-    // same pattern already documented in JOURNEY J-024/J-025, not a real regression.
+    // a known flake pattern, not a real regression.
     expect(await screen.findByText('Available balance', {}, { timeout: 5000 })).toBeInTheDocument()
   })
 })

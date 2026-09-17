@@ -28,7 +28,25 @@
   --color-success-bg: #e8f5ef;
   --color-danger: #c8372d;
   --color-danger-bg: #fbeceb;
-  --color-warning: #b45309;
+  /*
+    #b45309 (the original warning) reads as brown/rust rather than yellow, and measured only
+    ~3.1:1 against the dark navy text OfflineBanner painted on it — below WCAG AA's 4.5:1 for
+    normal text. #a16207 (Tailwind's yellow-700) is a genuinely more yellow hue and, against
+    the new --color-warning-bg below, measures ~4.6:1 — see BUILD_LOG "Review this" for the
+    maths and for Chioma to eyeball against the brand palette.
+  */
+  --color-warning: #a16207;
+  --color-warning-bg: #fef9c3;
+  /*
+    OfflineBanner paints --color-warning as a solid background (not a light tint like Badge),
+    so it needs the opposite pairing: white text in light mode (where --color-warning is dark
+    enough for white to read, ~4.9:1), dark navy in dark mode (where --color-warning is bright
+    enough that white would wash out, but the same navy used for --color-on-accent reads
+    ~6.4:1). --color-on-accent itself isn't reused directly because it's deliberately fixed
+    across themes for the accent-gold colour, which doesn't change brightness between themes —
+    --color-warning does, so its "readable text" colour has to flip too.
+  */
+  --color-on-warning: #ffffff;
 
   /*
     Text painted on a gold (--color-accent) surface, e.g. the primary Button variant.
@@ -62,6 +80,31 @@
   }
 }
 
+/*
+  react-day-picker (the Date range filter, shared/ui/DateRangeField.tsx) themed to the brand
+  tokens via its own CSS custom properties, rather than a Tailwind `classNames` override for
+  every calendar part — its bundled stylesheet already gets the grid/spacing right, only the
+  colour scheme needed to change. These reference the tokens above, so they already resolve
+  correctly in both themes without needing their own dark-mode block.
+*/
+.novabiz-rdp {
+  --rdp-accent-color: var(--color-primary);
+  --rdp-accent-background-color: var(--color-surface-hover);
+  --rdp-today-color: var(--color-accent-hover);
+  font-family: inherit;
+}
+
+/*
+  react-day-picker's own stylesheet sets `.rdp-selected { font-size: large; }`, so a picked
+  day visibly grows compared to every other day in the grid — reported as the calendar's text
+  size changing when you select a date. Keeping the bold (it's still a useful "this one's
+  picked" signal) but resetting the size back to whatever the rest of the grid uses, so
+  picking a day changes weight, not layout.
+*/
+.novabiz-rdp .rdp-selected {
+  font-size: inherit;
+}
+
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme='light']) {
     --color-primary: #4a8fc2;
@@ -79,6 +122,8 @@
     --color-danger: #e2564a;
     --color-danger-bg: rgb(226 86 74 / 0.05);
     --color-warning: #d99a3d;
+    --color-warning-bg: rgb(217 154 61 / 0.15);
+    --color-on-warning: #12253a;
   }
 }
 
@@ -98,4 +143,6 @@
   --color-danger: #e2564a;
   --color-danger-bg: rgb(226 86 74 / 0.05);
   --color-warning: #d99a3d;
+  --color-warning-bg: rgb(217 154 61 / 0.15);
+  --color-on-warning: #12253a;
 }

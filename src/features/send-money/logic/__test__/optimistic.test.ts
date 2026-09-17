@@ -40,6 +40,7 @@ const TRANSACTION_PAGES: InfiniteData<TransactionsPageDto> = {
         },
       ],
       nextCursor: 'cursor-1',
+      total: 1,
     },
   ],
   pageParams: [null],
@@ -87,6 +88,9 @@ describe('applyOptimisticTransfer', () => {
     })
     expect(firstPage?.transactions).toHaveLength(2)
     expect(firstPage?.transactions[1]?.id).toBe('txn-1')
+    // The "X of Y" count reflects the optimistic row immediately, not just after the
+    // server confirms it and onSettled refetches.
+    expect(firstPage?.total).toBe(2)
   })
 
   it('does not mutate its inputs', () => {

@@ -10,3 +10,15 @@ body {
   background-color: var(--color-surface);
   color: var(--color-text);
 }
+
+/*
+  A light, brand-tinted selection highlight instead of leaving it to whatever the OS/browser
+  picks — `color: inherit` means this only ever adds a soft tint behind selected text and
+  never touches the text's own colour, so it can't reduce contrast below whatever that text
+  already has against its own background (already audited elsewhere). `--color-accent` is the
+  one brand colour that doesn't change between light/dark mode, so one rule covers both themes.
+*/
+::selection {
+  background-color: color-mix(in srgb, var(--color-accent) 35%, transparent);
+  color: inherit;
+}

@@ -5,7 +5,7 @@ import type { MerchantDto } from '../../../../api/types'
 import { toKobo } from '../../../../lib/money'
 import { setControls } from '../../../../mocks/controls'
 import { setupMockServer } from '../../../../mocks/handlers/__test__/setupMockServer'
-import { renderWithQueryClient } from '../../../../test/renderWithQueryClient'
+import { renderWithQueryClient } from '../../../../testUtils/renderWithQueryClient'
 import { InsightsPanel } from '../InsightsPanel'
 
 setupMockServer()
@@ -26,14 +26,14 @@ const MERCHANT: MerchantDto = {
 describe('InsightsPanel', () => {
   it("shows the transfer-limit gauge computed from the merchant's own data straight away", () => {
     setControls({ fixedLatencyMs: 0, failRate: 0, timeoutMode: false })
-    renderWithQueryClient(<InsightsPanel merchant={MERCHANT} />)
+    renderWithQueryClient(<InsightsPanel merchant={MERCHANT} isBalanceVisible />)
 
     expect(screen.getByText('15% used')).toBeInTheDocument()
   })
 
   it('shows the week, top-payer, busiest-day, and average-sale cards once insights load', async () => {
     setControls({ fixedLatencyMs: 0, failRate: 0, timeoutMode: false })
-    renderWithQueryClient(<InsightsPanel merchant={MERCHANT} />)
+    renderWithQueryClient(<InsightsPanel merchant={MERCHANT} isBalanceVisible />)
 
     expect(await screen.findByText('Money in this week')).toBeInTheDocument()
     expect(screen.getByText('Top payer (last 30 days)')).toBeInTheDocument()
@@ -41,10 +41,23 @@ describe('InsightsPanel', () => {
     expect(screen.getByText('Average sale (last 30 days)')).toBeInTheDocument()
   })
 
+  // It wasn't clear from the card whether "top payer" was ranked by total money in or by how
+  // many payments they made — it's always ranked by total received (computeTopPayer sums
+  // `type: 'credit'` amounts only), but the helper text used to just show "₦X · 4 payments"
+  // without saying which one was the ranking. "received" makes the actual ranking basis
+  // explicit in the text itself.
+  it("labels the top-payer amount as received, so the ranking basis (money in) isn't ambiguous", async () => {
+    setControls({ fixedLatencyMs: 0, failRate: 0, timeoutMode: false })
+    renderWithQueryClient(<InsightsPanel merchant={MERCHANT} isBalanceVisible />)
+
+    await screen.findByText('Top payer (last 30 days)')
+    expect(screen.getByText(/received · \d[\d,]* payments?$/)).toBeInTheDocument()
+  })
+
   it('shows an error with Retry when insights fail to load, and recovers on retry', async () => {
     setControls({ fixedLatencyMs: 0, failRate: 1, timeoutMode: false })
     const user = userEvent.setup()
-    renderWithQueryClient(<InsightsPanel merchant={MERCHANT} />)
+    renderWithQueryClient(<InsightsPanel merchant={MERCHANT} isBalanceVisible />)
 
     const retryButton = await screen.findByRole('button', { name: 'Retry' })
     expect(screen.getByRole('alert')).toBeInTheDocument()
@@ -53,5 +66,18 @@ describe('InsightsPanel', () => {
     await user.click(retryButton)
 
     expect(await screen.findByText('Money in this week')).toBeInTheDocument()
+  })
+
+  // The dashboard-wide hide-balance toggle (BalanceSummary) is passed down here so every
+  // money/count figure masks together, not just the hero balance card — this proves the
+  // gauge card masks too.
+  it('masks every figure when isBalanceVisible is false, leaving labels visible', async () => {
+    setControls({ fixedLatencyMs: 0, failRate: 0, timeoutMode: false })
+    renderWithQueryClient(<InsightsPanel merchant={MERCHANT} isBalanceVisible={false} />)
+
+    expect(screen.queryByText('15% used')).not.toBeInTheDocument()
+    expect(await screen.findByText('Money in this week')).toBeInTheDocument()
+    expect(screen.queryByText(/₦/)).not.toBeInTheDocument()
+    expect(screen.getAllByText('••••').length).toBeGreaterThan(0)
   })
 })

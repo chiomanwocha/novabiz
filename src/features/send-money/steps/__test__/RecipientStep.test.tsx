@@ -4,7 +4,7 @@ import userEvent from '@testing-library/user-event'
 import { setControls } from '../../../../mocks/controls'
 import { getMerchant } from '../../../../mocks/db/store'
 import { setupMockServer } from '../../../../mocks/handlers/__test__/setupMockServer'
-import { renderWithQueryClient } from '../../../../test/renderWithQueryClient'
+import { renderWithQueryClient } from '../../../../testUtils/renderWithQueryClient'
 import { RecipientStep } from '../RecipientStep'
 
 // The real REQUEST_TIMEOUT_MS is 10s — mocked small so the 9999 (timeout) case doesn't
@@ -95,6 +95,28 @@ describe('RecipientStep', () => {
     ).toBeInTheDocument()
   })
 
+  // Regression case: the Retry button was stretching to the full width of the card — traced
+  // to it being a lone child of the card's `flex flex-col` container, which stretches a
+  // single item across the cross axis by default. Pairing it with the status text in its
+  // own row (not the card's own column layout) keeps it sized to its label, sitting beside
+  // the text instead of spanning underneath it.
+  it('shows a small, inline Retry button beside the message on a timeout, not a full-width one', async () => {
+    setControls({ fixedLatencyMs: 0, failRate: 0, timeoutMode: false })
+    const user = userEvent.setup()
+    renderWithQueryClient(<RecipientStep onNext={vi.fn()} />)
+
+    await selectBank(user)
+    await user.type(screen.getByLabelText('Account number'), '0000089999')
+
+    const retryButton = await screen.findByRole(
+      'button',
+      { name: 'Retry' },
+      { timeout: mockTimeoutMs * 10 },
+    )
+    expect(retryButton).toHaveClass('shrink-0')
+    expect(retryButton).not.toHaveClass('w-full')
+  })
+
   it('sanitises a pasted account number', async () => {
     const user = userEvent.setup()
     renderWithQueryClient(<RecipientStep onNext={vi.fn()} />)
@@ -120,6 +142,30 @@ describe('RecipientStep', () => {
 
     await user.type(field, '{backspace}9')
 
+    expect(screen.getByRole('button', { name: 'Next' })).toBeDisabled()
+  })
+
+  it('clears the account number (and any resolved name) when the bank is changed', async () => {
+    setControls({ fixedLatencyMs: 0, failRate: 0, timeoutMode: false })
+    const user = userEvent.setup()
+    renderWithQueryClient(<RecipientStep onNext={vi.fn()} />)
+
+    await selectBank(user)
+    const field = screen.getByLabelText('Account number')
+    await user.type(field, VALID_ACCOUNT_NUMBER)
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: 'Next' })).toBeEnabled()
+    })
+
+    const bankSelect = screen.getByLabelText('Bank')
+    await within(bankSelect).findByRole(
+      'option',
+      { name: 'Guaranty Trust Bank' },
+      { timeout: BANK_LIST_TIMEOUT_MS },
+    )
+    await user.selectOptions(bankSelect, '058')
+
+    expect(field).toHaveValue('')
     expect(screen.getByRole('button', { name: 'Next' })).toBeDisabled()
   })
 

@@ -1,25 +1,8 @@
+import { Check } from 'lucide-react'
+
 export interface StepContextPanelProps {
   heading: string
   points: readonly string[]
-}
-
-function CheckIcon() {
-  return (
-    <svg
-      aria-hidden="true"
-      viewBox="0 0 24 24"
-      fill="none"
-      className="mt-0.5 h-4 w-4 shrink-0 text-success"
-    >
-      <path
-        d="m5 13 4 4 10-10"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  )
 }
 
 /**
@@ -36,7 +19,11 @@ export function StepContextPanel({ heading, points }: StepContextPanelProps) {
         <ul className="mt-3 flex flex-col gap-3">
           {points.map((point) => (
             <li key={point} className="flex gap-2 text-sm text-muted">
-              <CheckIcon />
+              <Check
+                aria-hidden="true"
+                className="mt-0.5 h-4 w-4 shrink-0 text-success"
+                strokeWidth={2}
+              />
               <span>{point}</span>
             </li>
           ))}

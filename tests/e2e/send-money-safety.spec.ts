@@ -22,7 +22,9 @@ test('a double-click on Send produces exactly one POST', async ({ page }) => {
   })
 
   await page.getByRole('button', { name: 'Send money' }).dblclick()
-  await expect(page.getByText('Transfer sent')).toBeVisible()
+  // { exact: true }: the success view also shows a distinct "Transfer sent!" headline —
+  // Playwright's getByText is substring-matching by default, so without this it'd match both.
+  await expect(page.getByText('Transfer sent', { exact: true })).toBeVisible()
 
   expect(postCount).toBe(1)
 })
