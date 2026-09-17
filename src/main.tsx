@@ -18,9 +18,6 @@ const RELOAD_GUARD_KEY = 'novabiz-msw-reload-guard'
  * never controls the page.
  */
 async function startMockServiceWorkerIfNeeded(): Promise<boolean> {
-  if (!import.meta.env.DEV) {
-    return true
-  }
   const { worker } = await import('./mocks/browser')
   await worker.start({ onUnhandledRequest: 'bypass' })
 

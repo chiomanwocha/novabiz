@@ -90,7 +90,7 @@ export function BalanceSummary({ merchant }: BalanceSummaryProps) {
             {isBalanceVisible ? <EyeIcon /> : <EyeOffIcon />}
           </button>
         </div>
-        <span className="flex items-center gap-1 rounded-full bg-primary px-2.5 py-1 text-xs font-semibold text-white">
+        <span className="flex items-center gap-1 rounded-full bg-surface-hover px-2.5 py-1 text-xs font-semibold text-primary">
           <ShieldIcon />
           {TIER_LABELS[merchant.kycTier]}
         </span>
