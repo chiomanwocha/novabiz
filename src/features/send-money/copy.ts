@@ -12,10 +12,18 @@ export const sendMoneyCopy = {
     review: 'Review',
     confirm: 'Confirm',
   },
-  // Placeholders until ReviewStep/ConfirmStep (CP-18) replace them with real form content.
-  stepPlaceholders: {
-    review: 'Review coming in CP-18.',
-    confirm: 'Confirm & send coming in CP-18.',
+  review: {
+    recipientHeading: 'Sending to',
+    amountHeading: 'Amount',
+    narrationLabel: 'For',
+    confirmButton: 'Continue to confirm',
+  },
+  confirm: {
+    sendButton: 'Send money',
+    // The real send (useSendMoney, optimistic update, rollback, and reconciliation) is
+    // CP-19's scope — this step's Send button already disables on first press per
+    // CLAUDE.md 6.4, but there's genuinely nothing to send to yet.
+    notWiredUpYet: "Sending isn't wired up yet — that's the next checkpoint.",
   },
   amountField: {
     label: 'Amount',
