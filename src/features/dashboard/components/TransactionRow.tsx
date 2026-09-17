@@ -37,7 +37,7 @@ function TransactionRowComponent({ transaction, isAmountVisible = true }: Transa
 
   return (
     <div className="flex h-full items-center justify-between gap-3 border-b border-border px-1 transition hover:bg-text/5">
-      <div className="flex min-w-0 items-center gap-3">
+      <div className="flex min-w-0 flex-1 items-center gap-3">
         <span
           aria-hidden="true"
           className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-base ${
@@ -54,6 +54,18 @@ function TransactionRowComponent({ transaction, isAmountVisible = true }: Transa
           <p className="truncate text-xs text-muted">{transaction.description}</p>
         </div>
       </div>
+      {/*
+        Regression case: the badge and full date used to sit on one line here, `shrink-0` so
+        this whole column always kept its full natural width no matter what — on a 360px
+        screen, that left the counterparty name/description column (the only side actually
+        allowed to shrink) squeezed down to zero width, hiding it entirely rather than just
+        truncating it. Stacking the badge and date onto their own lines below `sm` makes this
+        column's own widest line much narrower there, leaving real width for the
+        name/description again. Reverting to the original single inline line from `sm` up
+        matters just as much: applying the narrow-screen fix unconditionally made the desktop
+        layout look cramped and stacked for no reason, when the width squeeze it exists to
+        solve never happens there.
+      */}
       <div className="flex shrink-0 flex-col items-end gap-1">
         <span className={`text-sm font-semibold ${isCredit ? 'text-success' : 'text-danger'}`}>
           {isAmountVisible ? (
@@ -65,7 +77,7 @@ function TransactionRowComponent({ transaction, isAmountVisible = true }: Transa
             dashboardCopy.maskedFigure
           )}
         </span>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-col items-end gap-0.5 sm:flex-row sm:items-center sm:gap-2">
           <Badge tone={STATUS_TONE[transaction.status]}>{STATUS_LABEL[transaction.status]}</Badge>
           <span className="whitespace-nowrap text-xs text-muted">
             {dateTimeFormatter.format(new Date(transaction.occurredAt))}

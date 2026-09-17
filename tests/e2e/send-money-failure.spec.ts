@@ -19,7 +19,7 @@ test('rolls back with a Failed message on a simulated failure, and Try again reu
   await completeAmountStep(page)
   await completeReviewStep(page)
 
-  await page.getByText('Mock controls').click()
+  await page.getByLabel('Mock controls').click()
   const failureRateSlider = page.getByLabel(/Failure rate/)
   await failureRateSlider.focus()
   // "End" jumps a range input straight to its max — a real, native key event React's
@@ -28,6 +28,9 @@ test('rolls back with a Failed message on a simulated failure, and Try again reu
   // that on a controlled element).
   await page.keyboard.press('End')
   await expect(page.getByText('Failure rate: 100%')).toBeVisible()
+  // Close the panel again — at 360px it's tall enough, still open, to sit over the Confirm
+  // step's own Send button below it.
+  await page.getByLabel('Mock controls').click()
 
   const idempotencyKeys: string[] = []
   page.on('request', (request) => {

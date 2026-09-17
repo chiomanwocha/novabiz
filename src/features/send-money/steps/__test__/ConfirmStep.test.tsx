@@ -6,6 +6,8 @@ import { toKobo } from '../../../../lib/money'
 import { setControls } from '../../../../mocks/controls'
 import { setupMockServer } from '../../../../mocks/handlers/__test__/setupMockServer'
 import { renderWithQueryClient } from '../../../../testUtils/renderWithQueryClient'
+import { useSendMoney } from '../../hooks/useSendMoney'
+import type { ResolvedAmount } from '../AmountStep'
 import { ConfirmStep } from '../ConfirmStep'
 import type { ResolvedRecipient } from '../RecipientStep'
 
@@ -14,6 +16,31 @@ setupMockServer()
 const BANK_CODE = '011'
 const ACCOUNT_NUMBER = '0102030400'
 const AMOUNT = { amountKobo: toKobo(100_050), narration: 'Stock top-up' }
+
+interface TestConfirmStepProps {
+  recipient: ResolvedRecipient
+  amount: ResolvedAmount
+  idempotencyKey: string
+  onBack: () => void
+}
+
+// ConfirmStep no longer calls useSendMoney() itself — SendMoneyPage does, and passes
+// send/status down (see ConfirmStepProps' own comment for why). This wrapper plays
+// SendMoneyPage's part here, so these tests keep exercising the real hook against the real
+// mock server, not a stubbed send/status pair.
+function TestConfirmStep({ recipient, amount, idempotencyKey, onBack }: TestConfirmStepProps) {
+  const { send, status } = useSendMoney()
+  return (
+    <ConfirmStep
+      recipient={recipient}
+      amount={amount}
+      idempotencyKey={idempotencyKey}
+      send={send}
+      status={status}
+      onBack={onBack}
+    />
+  )
+}
 
 async function resolveRecipient(): Promise<ResolvedRecipient> {
   const { accountName, nameEnquiryRef } = await postNameEnquiry({
@@ -38,7 +65,12 @@ describe('ConfirmStep', () => {
     const recipient = await resolveRecipient()
     const user = userEvent.setup()
     renderWithQueryClient(
-      <ConfirmStep recipient={recipient} amount={AMOUNT} idempotencyKey="key-1" onBack={vi.fn()} />,
+      <TestConfirmStep
+        recipient={recipient}
+        amount={AMOUNT}
+        idempotencyKey="key-1"
+        onBack={vi.fn()}
+      />,
     )
 
     const sendButton = screen.getByRole('button', { name: 'Send money' })
@@ -54,7 +86,7 @@ describe('ConfirmStep', () => {
   it('asks a confirmation question and states the transfer cannot be undone, rather than repeating the review recap', async () => {
     const recipient = await resolveRecipient()
     renderWithQueryClient(
-      <ConfirmStep
+      <TestConfirmStep
         recipient={recipient}
         amount={AMOUNT}
         idempotencyKey="key-distinct"
@@ -77,7 +109,12 @@ describe('ConfirmStep', () => {
     const recipient = await resolveRecipient()
     const user = userEvent.setup()
     renderWithQueryClient(
-      <ConfirmStep recipient={recipient} amount={AMOUNT} idempotencyKey="key-2" onBack={vi.fn()} />,
+      <TestConfirmStep
+        recipient={recipient}
+        amount={AMOUNT}
+        idempotencyKey="key-2"
+        onBack={vi.fn()}
+      />,
     )
 
     await user.click(screen.getByRole('button', { name: 'Send money' }))
@@ -105,7 +142,12 @@ describe('ConfirmStep', () => {
     setControls({ fixedLatencyMs: 0, failRate: 1, timeoutMode: false })
     const user = userEvent.setup()
     renderWithQueryClient(
-      <ConfirmStep recipient={recipient} amount={AMOUNT} idempotencyKey="key-3" onBack={vi.fn()} />,
+      <TestConfirmStep
+        recipient={recipient}
+        amount={AMOUNT}
+        idempotencyKey="key-3"
+        onBack={vi.fn()}
+      />,
     )
 
     await user.click(screen.getByRole('button', { name: 'Send money' }))
@@ -121,7 +163,12 @@ describe('ConfirmStep', () => {
     setControls({ fixedLatencyMs: 0, failRate: 1, timeoutMode: false })
     const user = userEvent.setup()
     renderWithQueryClient(
-      <ConfirmStep recipient={recipient} amount={AMOUNT} idempotencyKey="key-4" onBack={vi.fn()} />,
+      <TestConfirmStep
+        recipient={recipient}
+        amount={AMOUNT}
+        idempotencyKey="key-4"
+        onBack={vi.fn()}
+      />,
     )
 
     await user.click(screen.getByRole('button', { name: 'Send money' }))
@@ -135,7 +182,12 @@ describe('ConfirmStep', () => {
     const user = userEvent.setup()
     const onBack = vi.fn()
     renderWithQueryClient(
-      <ConfirmStep recipient={recipient} amount={AMOUNT} idempotencyKey="key-5" onBack={onBack} />,
+      <TestConfirmStep
+        recipient={recipient}
+        amount={AMOUNT}
+        idempotencyKey="key-5"
+        onBack={onBack}
+      />,
     )
 
     await user.click(screen.getByRole('button', { name: 'Back' }))

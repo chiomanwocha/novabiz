@@ -98,6 +98,40 @@ describe('DateRangeField', () => {
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
   })
 
+  // Regression case: the popover always anchored right-0, which assumes this field sits at
+  // the right edge of a row — true on the desktop layout its one caller uses, but not on
+  // mobile, where the caller stacks fields full-width and this field sits near the left. A
+  // right-anchored popover wider than the space to its left rendered mostly off-screen there.
+  it('anchors the calendar to the left edge below the desktop breakpoint, and the right edge from it', async () => {
+    const user = userEvent.setup()
+    render(<DateRangeField label="Date range" fromValue="" toValue="" onRangeChange={vi.fn()} />)
+
+    await user.click(screen.getByRole('button', { name: /^date range/i }))
+    const dialog = screen.getByRole('dialog')
+
+    expect(dialog).toHaveClass('left-0')
+    expect(dialog).toHaveClass('lg:right-0')
+  })
+
+  // Regression case: on a short mobile viewport the open calendar sat directly over the
+  // transaction feed below it with nothing marking it as a floating layer, which read as the
+  // feed itself rendering broken/cut-off content rather than an intentional overlay.
+  it('renders a backdrop behind the calendar that closes it on click', async () => {
+    const user = userEvent.setup()
+    render(<DateRangeField label="Date range" fromValue="" toValue="" onRangeChange={vi.fn()} />)
+
+    await user.click(screen.getByRole('button', { name: /^date range/i }))
+    expect(screen.getByRole('dialog')).toBeInTheDocument()
+
+    const backdrop = document.querySelector('[aria-hidden="true"].fixed.inset-0')
+    if (!backdrop) {
+      throw new Error('Expected the backdrop element to be in the document')
+    }
+
+    await user.click(backdrop)
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+  })
+
   it('closes the calendar on an outside click', async () => {
     const user = userEvent.setup()
     render(

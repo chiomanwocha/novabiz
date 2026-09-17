@@ -7,7 +7,7 @@ import { Card } from '../../../shared/ui/Card'
 import { LinkButton } from '../../../shared/ui/LinkButton'
 import { StatusAnnouncer } from '../components/StatusAnnouncer'
 import { sendMoneyCopy } from '../copy'
-import { useSendMoney } from '../hooks/useSendMoney'
+import type { SendMoneyInput, SendMoneyStatus } from '../hooks/useSendMoney'
 
 import type { ResolvedAmount } from './AmountStep'
 import type { ResolvedRecipient } from './RecipientStep'
@@ -16,6 +16,15 @@ export interface ConfirmStepProps {
   recipient: ResolvedRecipient
   amount: ResolvedAmount
   idempotencyKey: string
+  /**
+   * `useSendMoney()` is instantiated by SendMoneyPage, not here, and passed down — this step
+   * used to call the hook itself, which meant navigating Back then Forward remounted it and
+   * reset `status` to idle even while a send was still genuinely in flight on the server.
+   * Lifting it keeps one mutation instance alive for the whole flow, the same way the
+   * resolved recipient/amount and idempotency key already are.
+   */
+  send: (input: SendMoneyInput) => void
+  status: SendMoneyStatus
   onBack: () => void
 }
 
@@ -36,9 +45,14 @@ export interface ConfirmStepProps {
  * form — there's nothing left to review or confirm at that point, so Back/Send buttons no
  * longer make sense either.
  */
-export function ConfirmStep({ recipient, amount, idempotencyKey, onBack }: ConfirmStepProps) {
-  const { send, status } = useSendMoney()
-
+export function ConfirmStep({
+  recipient,
+  amount,
+  idempotencyKey,
+  send,
+  status,
+  onBack,
+}: ConfirmStepProps) {
   function handleSend(): void {
     send({ idempotencyKey, recipient, amount })
   }

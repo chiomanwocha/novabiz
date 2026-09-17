@@ -12,8 +12,7 @@
  *   - bank 058, serial 001656322 -> check digit 8 -> account 0016563228
  *
  * The primary CBN circular itself was not directly accessible to verify against, so treat
- * this as a well-corroborated secondary source rather than a primary-source guarantee —
- * see GUIDE.md "Account number validation" for the full caveat.
+ * this as a well-corroborated secondary source rather than a primary-source guarantee.
  *
  * This is an early typo catcher, not the final authority — the mock name-enquiry
  * endpoint is the source of truth, and the server re-validates the check digit too.

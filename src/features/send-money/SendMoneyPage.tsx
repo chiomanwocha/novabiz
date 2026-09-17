@@ -5,6 +5,7 @@ import { StepContextPanel } from './components/StepContextPanel'
 import { StepHeading } from './components/StepHeading'
 import { sendMoneyCopy } from './copy'
 import { useIdempotencyKey } from './hooks/useIdempotencyKey'
+import { useSendMoney } from './hooks/useSendMoney'
 import { AmountStep, type AmountDraft, type ResolvedAmount } from './steps/AmountStep'
 import { ConfirmStep } from './steps/ConfirmStep'
 import { RecipientStep, type RecipientDraft, type ResolvedRecipient } from './steps/RecipientStep'
@@ -52,6 +53,9 @@ function idempotencySignature(
  * Confirm both need them. The idempotency key is created here too — "the flow state" per
  * CLAUDE.md 6.4 — from a signature of the resolved recipient and amount, so it's stable
  * across a Back-then-Forward navigation and only changes when one of them really does.
+ * `useSendMoney()` is lifted for the same reason: instantiated inside ConfirmStep, Back then
+ * Forward would remount it and reset `status` to idle even while a send was still genuinely
+ * in flight on the server.
  */
 export function SendMoneyPage() {
   const [stepId, setStepId] = useState<StepId>('recipient')
@@ -62,6 +66,7 @@ export function SendMoneyPage() {
   const headingRef = useRef<HTMLHeadingElement>(null)
 
   const idempotencyKey = useIdempotencyKey(idempotencySignature(resolvedRecipient, resolvedAmount))
+  const { send, status } = useSendMoney()
 
   useEffect(() => {
     headingRef.current?.focus()
@@ -114,6 +119,8 @@ export function SendMoneyPage() {
               recipient={resolvedRecipient}
               amount={resolvedAmount}
               idempotencyKey={idempotencyKey}
+              send={send}
+              status={status}
               onBack={() => {
                 setStepId(previousStepId(stepId))
               }}

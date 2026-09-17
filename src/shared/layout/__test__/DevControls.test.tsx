@@ -9,6 +9,15 @@ describe('DevControls', () => {
     setControls({ fixedLatencyMs: null, failRate: 0, timeoutMode: false })
   })
 
+  // Regression case: the panel used to be a full-width labelled box sitting directly on top
+  // of the mobile bottom tab bar. Collapsing it to an icon keeps the same accessible name
+  // (via aria-label, since there's no longer visible text) without blocking navigation.
+  it('collapses to a small icon button with an accessible name, not the full panel text', () => {
+    render(<DevControls />)
+
+    expect(screen.getByLabelText('Mock controls').tagName).toBe('SUMMARY')
+  })
+
   it('reflects the current controls on mount', () => {
     setControls({ fixedLatencyMs: 0, failRate: 0.5, timeoutMode: true })
     render(<DevControls />)

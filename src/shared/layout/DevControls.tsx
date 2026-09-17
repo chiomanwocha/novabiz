@@ -1,3 +1,4 @@
+import { Settings } from 'lucide-react'
 import { useId, useState } from 'react'
 
 import { getControls, setControls, type MockControls } from '../../mocks/controls'
@@ -15,6 +16,11 @@ const LATENCY_OPTIONS = [
  * a plain mutable module with no pub-sub of its own, so this is the only UI that ever
  * changes it — local state here just mirrors it for display, it isn't a second source of
  * truth another component could read stale values from.
+ *
+ * Collapsed to a single icon button, not the full panel — the panel's own width used to sit
+ * directly on top of the mobile bottom tab bar (PrimaryNav), blocking the Send Money link.
+ * `bottom-20` (mobile only, where that tab bar exists) clears it; `md:bottom-3` matches the
+ * old corner position once the nav becomes a side rail and there's nothing left to cover.
  */
 export function DevControls() {
   const [controls, setLocalControls] = useState<MockControls>(getControls)
@@ -28,9 +34,14 @@ export function DevControls() {
   }
 
   return (
-    <details className="fixed bottom-3 right-3 z-50 w-64 rounded-xl border border-border bg-surface p-3 text-sm shadow-lg">
-      <summary className="cursor-pointer font-semibold text-text">Mock controls</summary>
-      <div className="mt-3 flex flex-col gap-3">
+    <details className="fixed bottom-20 right-3 z-50 md:bottom-3">
+      <summary
+        aria-label="Mock controls"
+        className="flex h-11 w-11 cursor-pointer list-none items-center justify-center rounded-full border border-border bg-surface text-muted shadow-lg transition hover:text-text [&::-webkit-details-marker]:hidden"
+      >
+        <Settings aria-hidden="true" className="h-5 w-5" strokeWidth={1.8} />
+      </summary>
+      <div className="mt-3 flex w-64 flex-col gap-3 rounded-xl border border-border bg-surface p-3 text-sm shadow-lg">
         <label htmlFor={latencyId} className="flex flex-col gap-1 text-text">
           Latency
           <select

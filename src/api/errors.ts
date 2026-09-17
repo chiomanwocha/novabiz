@@ -20,7 +20,13 @@ export class ApiError extends Error {
   }
 }
 
-/** Network failures, timeouts, and 5xx responses are worth retrying. A 4xx never is. */
+/**
+ * Network failures, timeouts, and 5xx responses are worth retrying. A 4xx never is.
+ * `invalidResponse` is deliberately excluded, not an oversight: it means the service worker
+ * has lost control of the page (see requiresPageReloadToRetry below), and a query retry just
+ * re-sends the same request into the same uncontrolled page — only a real reload
+ * (`mocks/ensureWorkerControlled.ts`) can actually fix that.
+ */
 export function isRetryable(error: unknown): boolean {
   if (!(error instanceof ApiError)) {
     return false

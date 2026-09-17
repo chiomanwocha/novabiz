@@ -37,6 +37,20 @@ describe('TransactionRow', () => {
     expect(screen.getByText(/16 sept 2026/i)).toBeInTheDocument()
   })
 
+  // Regression case: the amount/badge/date column was `shrink-0`, always keeping its full
+  // natural width — on a 360px screen that left no room for the counterparty name/description
+  // column (the only side actually allowed to shrink), squeezing it down to zero width rather
+  // than just truncating it. `flex-1` on the name/description side lets it actually compete
+  // for space instead of only ever giving way.
+  it('lets the counterparty/description column compete for width, rather than only ever giving way to the amount column', () => {
+    const { container } = render(<TransactionRow transaction={buildTransaction()} />)
+
+    const nameText = screen.getByText('Chidinma Okafor')
+    const nameColumnWrapper = nameText.closest('div')?.parentElement
+    expect(nameColumnWrapper).toHaveClass('flex-1')
+    expect(container.querySelector('.shrink-0')).not.toHaveClass('flex-1')
+  })
+
   it('shows a debit with a minus sign', () => {
     render(<TransactionRow transaction={buildTransaction({ type: 'debit' })} />)
     expect(screen.getByText('-₦1,500.00')).toBeInTheDocument()

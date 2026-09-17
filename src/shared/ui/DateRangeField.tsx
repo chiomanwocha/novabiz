@@ -146,25 +146,41 @@ export function DateRangeField({ label, fromValue, toValue, onRangeChange }: Dat
         )}
       </div>
       {isOpen && (
-        <div
-          role="dialog"
-          aria-label={`${label} picker`}
-          // right-0 (not left-0): this field sits at the right edge of the filters row on
-          // desktop, so a popover anchored to its left edge could open off-screen.
-          // max-w/overflow-x-auto is a safety net for 360px screens rather than the primary
-          // fix (text-sm below already shrinks the calendar enough to fit without it in
-          // practice).
-          className="absolute top-full right-0 z-20 mt-2 max-w-[calc(100vw-2rem)] overflow-x-auto rounded-xl border border-border bg-surface p-2 text-sm shadow-lg"
-        >
-          <DayPicker
-            mode="range"
-            selected={selected}
-            onSelect={handleSelect}
-            defaultMonth={selected.from ?? selected.to}
-            disabled={{ after: new Date() }}
-            className="novabiz-rdp"
+        <>
+          {/* Mobile only (lg:hidden): the calendar is tall enough on a short 360px viewport
+              to sit directly over the transaction feed below it — without this, the feed's
+              own heading and rows show through around/behind the calendar's edges, reading
+              as broken content rather than an intentional floating overlay. Desktop has
+              enough vertical room that this was never actually a problem there. */}
+          <div
+            aria-hidden="true"
+            className="fixed inset-0 z-10 bg-text/30 lg:hidden"
+            onClick={() => {
+              setIsOpen(false)
+            }}
           />
-        </div>
+          <div
+            role="dialog"
+            aria-label={`${label} picker`}
+            // The one caller of this component (TransactionFilters) stacks its fields
+            // full-width below `lg`, where this field sits near the *left* edge, then
+            // switches to a row ending at the *right* edge at `lg` and up. Anchoring right-0
+            // unconditionally (the desktop-only assumption) pushed the calendar off the left
+            // edge of the viewport on mobile, cutting off most of its columns — left-0 below
+            // `lg`, right-0 to match the row's own flip from there. max-w/overflow-x-auto
+            // stays as a safety net regardless of which edge it's anchored to.
+            className="absolute top-full left-0 z-20 mt-2 max-w-[calc(100vw-2rem)] overflow-x-auto rounded-xl border border-border bg-surface p-2 text-sm shadow-lg lg:left-auto lg:right-0"
+          >
+            <DayPicker
+              mode="range"
+              selected={selected}
+              onSelect={handleSelect}
+              defaultMonth={selected.from ?? selected.to}
+              disabled={{ after: new Date() }}
+              className="novabiz-rdp"
+            />
+          </div>
+        </>
       )}
     </div>
   )

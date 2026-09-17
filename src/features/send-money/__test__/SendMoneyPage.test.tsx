@@ -136,4 +136,53 @@ describe('SendMoneyPage', () => {
     expect(screen.getByText('₦1,000.50')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Send money' })).toBeEnabled()
   })
+
+  // Regression case: ConfirmStep used to call useSendMoney() itself, so navigating away from
+  // it and back again remounted the hook and silently reset `status` to idle — a failed send
+  // would quietly forget it had failed. useSendMoney() is now instantiated once here in
+  // SendMoneyPage and passed down, so the same mutation instance (and its status) survives
+  // a Back-then-Forward navigation through Confirm.
+  it('keeps a failed send status after navigating Back from Confirm and forward again', async () => {
+    setControls({ fixedLatencyMs: 0, failRate: 0, timeoutMode: false })
+    const user = userEvent.setup()
+    renderWithQueryClient(<SendMoneyPage />)
+
+    const bankSelect = screen.getByLabelText('Bank')
+    await within(bankSelect).findByRole(
+      'option',
+      { name: 'First Bank of Nigeria' },
+      { timeout: BANK_LIST_TIMEOUT_MS },
+    )
+    await user.selectOptions(bankSelect, RECIPIENT_BANK_CODE)
+    await user.type(screen.getByLabelText('Account number'), RECIPIENT_ACCOUNT_NUMBER)
+    const recipientNextButton = await screen.findByRole('button', { name: 'Next' })
+    await waitFor(() => {
+      expect(recipientNextButton).toBeEnabled()
+    })
+    await user.click(recipientNextButton)
+    await screen.findByRole('heading', { name: 'How much?' })
+
+    await user.type(screen.getByLabelText('Amount'), '1,000.50')
+    await user.click(screen.getByRole('button', { name: 'Next' }))
+    await screen.findByRole('heading', { name: 'Review your transfer' })
+    await user.click(screen.getByRole('button', { name: 'Continue to confirm' }))
+    await screen.findByRole('heading', { name: 'Confirm' })
+
+    // The send itself must fail — only a 'failed' status re-enables Back (a genuinely
+    // 'sending' one disables it, by design, so it can't be navigated away from mid-flight).
+    setControls({ fixedLatencyMs: 0, failRate: 1, timeoutMode: false })
+    await user.click(screen.getByRole('button', { name: 'Send money' }))
+    await screen.findByText('The transfer could not be completed. Please try again.')
+
+    await user.click(screen.getByRole('button', { name: 'Back' }))
+    await screen.findByRole('heading', { name: 'Review your transfer' })
+    await user.click(screen.getByRole('button', { name: 'Continue to confirm' }))
+    await screen.findByRole('heading', { name: 'Confirm' })
+
+    expect(
+      screen.getByText('The transfer could not be completed. Please try again.'),
+    ).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Try again' })).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Send money' })).not.toBeInTheDocument()
+  })
 })
